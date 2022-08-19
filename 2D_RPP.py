@@ -145,4 +145,7 @@ if __name__ == "__main__":
     rpp = RPP(dataset=data, values="volume", radius=R)
     rpp.optimize()
 
+    # TODO Inspect rotation problem
+    rot = RPP(dataset=data, values="volume", radius=R, rotation=True)
+    rot.optimize()
     print()
