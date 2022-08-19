@@ -18,7 +18,9 @@ class RPP:
 
         if self.rotation:
             self.data = dataset + [(d[1], d[0]) for d in dataset]
-        self.data = dataset
+        else:
+            self.data = dataset
+
         self.R = radius
         self._name = name
         self._model = gp.Model(self._name)
@@ -58,6 +60,30 @@ class RPP:
 
     def optimize(self):
         self._model.optimize()
+
+    def display(self):
+        print(f"\n\n___________ Solution of problem: {self._name} ___________")
+        accepted = [i for i in self._items if self.a[i].x > 1e-6]
+        if self.rotation:
+            for i in range(self._N // 2):
+                if i in accepted:
+                    print(f"Accepted item {i}, at position ({self.x[i].x},{self.y[i].x})")
+                if i + self._N // 2 in accepted:
+                    print(f"Accepted item {i} ({i + self._N // 2}), at position "
+                          f"({self.x[i + self._N // 2].x},{self.y[i + self._N // 2].x}) rotated")
+        else:
+            for i in accepted:
+                print(f"Accepted item {i}, at position ({self.x[i].x},{self.y[i].x})")
+
+        print("Z:")
+        print(f"   {[j for j in accepted[1:]]}")
+        for i in accepted[:-1]:
+            print(f"{i}:{[self.z[i, j].x for j in accepted[1:]]}")
+        # i = 3
+        # j = 6
+        # print(f"Delta {i}, {j}:")
+        # print(f"{[self.delta[i, j, p].x for p in range(4)]}")
+        print(f"__________________________________________________\n\n")
 
     def _add_variables(self):
         a = self._model.addVars(self._N, vtype=GRB.BINARY, name="a")  # acceptance of box i
@@ -140,12 +166,14 @@ class RPP:
 
 if __name__ == "__main__":
     R = 1.5
-    data = [(1, 2), (3, 1), (3, 1), (2, 1)]
+    # data = [(1, 2), (3, 1), (3, 1), (2, 1)]
+    data = [(1, 2) for _ in range(4)]
 
     rpp = RPP(dataset=data, values="volume", radius=R)
     rpp.optimize()
+    rpp.display()
 
-    # TODO Inspect rotation problem
     rot = RPP(dataset=data, values="volume", radius=R, rotation=True)
     rot.optimize()
+    rot.display()
     print()
