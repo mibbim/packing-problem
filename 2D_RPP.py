@@ -40,15 +40,7 @@ class RPP:
         self._items = range(self._N)
         self._directions = range(directions)
 
-        self.M = np.ones((N, N, directions)) * 2 * R
-
-        # self.a = self._model.addVars(self._N, vtype=GRB.BINARY, name="a")  # acceptance of box i
-        # self.z = self._model.addVars(self._N, self._N, vtype=GRB.BINARY, name="z")
-        # self.x = self._model.addVars(self._N, vtype=GRB.CONTINUOUS, name="x")
-        # self.y = self._model.addVars(self._N, vtype=GRB.CONTINUOUS, name="y")
-        #
-        # self.delta = self._model.addVars(self._N, self._N, directions, vtype=GRB.BINARY,
-        #                                  name="delta")
+        self.M = np.ones((self._N, self._N, directions)) * 2 * R
 
         self.a, self.z, self.x, self.y, self.delta = self.reset_model()
         self._model.setObjective(sum(self.a[i] * self._v[i] for i in self._items), GRB.MAXIMIZE)
@@ -147,68 +139,8 @@ class RPP:
 
 
 if __name__ == "__main__":
-    m = gp.Model("2D_Rpp")
     R = 1.5
     data = [(1, 2), (3, 1), (3, 1), (2, 1)]
-    values = [l * h for (l, h) in data]  # Area
-    l = [d[0] for d in data]
-    h = [d[1] for d in data]
-    N = len(data)
-
-    a = m.addVars(N, vtype=GRB.BINARY, name="a")  # acceptance of box i
-    z = m.addVars(N, N, vtype=GRB.BINARY, name="z")
-    x = m.addVars(N, vtype=GRB.CONTINUOUS, name="x")
-    y = m.addVars(N, vtype=GRB.CONTINUOUS, name="y")
-
-    delta = m.addVars(N, N, 4, vtype=GRB.BINARY, name="delta")
-    # M = m.addVars(N, N, 4, vtype=GRB.INTEGER, name="M")
-    M = np.ones((N, N, 4)) * 2 * R
-
-    m.setObjective(sum(a[i] * values[i] for i in range(N)), GRB.MAXIMIZE)
-
-    two_a = m.addConstrs(
-        (a[i] + a[j] - 1 <= z[i, j] for i in range(N) for j in range(i + 1, N)),
-        "2a")
-    two_b = m.addConstrs(
-        (z[i, j] <= a[i] for i in range(N) for j in range(i + 1, N)),
-        "2b"
-
-    )
-    three_b = m.addConstrs(
-        (z[i, j] <= a[j] for i in range(N) for j in range(i + 1, N)),
-        "3b"
-    )
-
-    four_a = m.addConstrs(
-        (z[i, j] <= sum(delta[i, j, p] for p in range(4)) for i in range(N) for j in
-         range(i + 1, N)),
-        "4_a"
-    )
-
-    four_b = m.addConstrs(
-        (sum(delta[i, j, p] for p in range(4)) <= 2 * z[i, j] for i in range(N) for j in
-         range(i + 1, N)),
-        "4_b"
-    )
-
-    five = m.addConstrs((x[i] + l[i] <= x[j] + M[i, j, 0] * (1 - delta[i, j, 0])
-                         for i in range(N) for j in range(i + 1, N)), name="five")
-
-    six = m.addConstrs(x[i] >= l[j] + x[j] - M[i, j, 1] * (1 - delta[i, j, 1])
-                       for i in range(N) for j in range(i + 1, N))
-
-    seven = m.addConstrs(y[i] + h[i] <= y[j] + M[i, j, 2] * (1 - delta[i, j, 2])
-                         for i in range(N) for j in range(i + 1, N))
-
-    eight = m.addConstrs(y[i] >= h[j] + y[j] - M[i, j, 3] * (1 - delta[i, j, 3])
-                         for i in range(N) for j in range(i + 1, N))
-
-    ten = m.addConstrs((x[i] == [0, 2 * R - l[i]] for i in range(N)))
-    eleven = m.addConstrs((y[i] == [0, 2 * R - h[i]] for i in range(N)))
-
-    # m_contr = m.addConstrs((M[i, j, p] == 2 * R for i in range(N) for j in range(N)
-    #                         for p in range(4)))
-    m.optimize()
 
     rpp = RPP(dataset=data, values="volume", radius=R)
     rpp.optimize()
