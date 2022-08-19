@@ -28,7 +28,7 @@ class RPP:
         self._constr = {}
 
         if values == "count":
-            self._v = [1 for (l, h) in self.data]
+            self._v = [1 for _ in self.data]
         elif values == "volume":
             self._v = [l * h for (l, h) in self.data]
         else:
@@ -42,10 +42,9 @@ class RPP:
         self._items = range(self._N)
         self._directions = range(directions)
 
-        self.M = np.ones((self._N, self._N, directions)) * 2 * R
+        self.M = np.ones((self._N, self._N, directions)) * 2 * self.R
 
         self.a, self.z, self.x, self.y, self.delta = self.reset_model()
-        self._model.setObjective(sum(self.a[i] * self._v[i] for i in self._items), GRB.MAXIMIZE)
         # for CPP
         # self._s_l = np.zeros(self._N)
         # self._s_h = np.zeros(self._N)
@@ -154,7 +153,7 @@ class RPP:
 
     def _add_xy_boundaries_constr(self, x, y):
         self._constr["10"] = self._model.addConstrs(
-            (x[i] == [0, 2 * self.R - self._l[i]] for i in self._items), name="11")
+            (x[i] == [0, 2 * self.R - self._l[i]] for i in self._items), name="10")
         self._constr["11"] = self._model.addConstrs(
             (y[i] == [0, 2 * self.R - self._h[i]] for i in self._items), name="11")
 
