@@ -132,12 +132,6 @@ class RPP_OPP(OPP):
              for i in self._items for j in range(i + 1, self._N)), name="8"
         )
 
-    def _add_xy_boundaries_constr(self, x, y):
-        self._constr["10"] = self._model.addConstrs(
-            (x[i] == [0, 2 * self.R - self._l[i]] for i in self._items), name="10")
-        self._constr["11"] = self._model.addConstrs(
-            (y[i] == [0, 2 * self.R - self._h[i]] for i in self._items), name="11")
-
     def _add_rotation_constr(self, a):
         self._constr["rotation"] = self._model.addConstrs(
             a[i] + a[i + self._N // 2] <= 1 for i in range(self._N // 2)
