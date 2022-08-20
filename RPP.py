@@ -111,27 +111,6 @@ class RPP_OPP(OPP):
              self._items for j in range(i + 1, self._N)), "4b"
         )
 
-    def _add_no_overlap_constr(self, x, y, delta):
-        self._constr["5"] = self._model.addConstrs(
-            (x[i] + self._l[i] <= x[j] + self.M[i, j, 0] * (1 - delta[i, j, 0])
-             for i in self._items for j in range(i + 1, self._N)), name="5"
-        )
-
-        self._constr["6"] = self._model.addConstrs(
-            (x[i] >= self._l[j] + x[j] - self.M[i, j, 1] * (1 - delta[i, j, 1])
-             for i in self._items for j in range(i + 1, self._N)), name="6"
-        )
-
-        self._constr["7"] = self._model.addConstrs(
-            (y[i] + self._h[i] <= y[j] + self.M[i, j, 2] * (1 - delta[i, j, 2])
-             for i in self._items for j in range(i + 1, self._N)), name="7"
-        )
-
-        self._constr["8"] = self._model.addConstrs(
-            (y[i] >= self._h[j] + y[j] - self.M[i, j, 3] * (1 - delta[i, j, 3])
-             for i in self._items for j in range(i + 1, self._N)), name="8"
-        )
-
     def _add_rotation_constr(self, a):
         self._constr["rotation"] = self._model.addConstrs(
             a[i] + a[i + self._N // 2] <= 1 for i in range(self._N // 2)
