@@ -34,16 +34,16 @@ class OPP:
 
         self.M = np.ones((self._N, self._N, directions)) * 2 * self.R
 
-        self.vars = self.reset_model()
-        self.x, self.y, self.delta = self.vars["x"], self.vars["y"], self.vars["delta"]
+        self.x = self.y = self.delta = None
+        self.reset_model()
 
     def reset_model(self):
         self._model = gp.Model(self._name)
         variables = self._add_variables()
+        self.x, self.y, self.delta = variables
         self._add_constr(*variables)
 
         self._model.setObjective(sum(1 for _ in self._items), GRB.MAXIMIZE)
-        return dict(zip(("x", "y", "delta"), variables))
 
     def optimize(self):
         self._model.optimize()
@@ -53,6 +53,7 @@ class OPP:
         y = self._model.addVars(self._N, vtype=GRB.CONTINUOUS, name="y")
         delta = self._model.addVars(self._N, self._N, 4, vtype=GRB.BINARY,
                                     name="delta")
+
         return x, y, delta
 
     def _add_constr(self, x, y, delta):
