@@ -29,7 +29,8 @@ class RPP_OPP(OPP):
 
         self.a = self.z = self.x = self.y = self.delta = None
 
-        super().__init__(dataset=self.data, radius=radius, rotation=False, name=name)
+        super().__init__(dataset=self.data, radius=radius, rotation=self.rotation, name=name)
+        # self.rotation = rotation
 
     def reset_model(self):
         self._model = gp.Model(self._name)
@@ -64,9 +65,9 @@ class RPP_OPP(OPP):
         print(f"__________________________________________________\n\n")
 
     def _add_variables(self):
-        x, y, delta = super()._add_variables()
         a = self._model.addVars(self._N, vtype=GRB.BINARY, name="a")  # acceptance of box i
         z = self._model.addVars(self._N, self._N, vtype=GRB.BINARY, name="z")
+        x, y, delta = super()._add_variables()
         # x = self._model.addVars(self._N, vtype=GRB.CONTINUOUS, name="x")
         # y = self._model.addVars(self._N, vtype=GRB.CONTINUOUS, name="y")
         # delta = self._model.addVars(self._N, self._N, 4, vtype=GRB.BINARY,
@@ -292,7 +293,7 @@ if __name__ == "__main__":
     rot.optimize()
     rot.display()
 
-    rot2 = RPP(dataset=data, values="volume", radius=R, rotation=True)
+    rot2 = RPP_OPP(dataset=data, values="volume", radius=R, rotation=True)
     rot2.optimize()
     rot2.display()
     print()
