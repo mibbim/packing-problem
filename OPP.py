@@ -12,12 +12,12 @@ class OPP:
                  name: str = "2D_OPP"):
         self.rotation = rotation
 
-        if self.rotation:
-            raise NotImplementedError
-            # self.data = dataset + [(d[1], d[0]) for d in dataset]
-        else:
-            self.data = dataset
-
+        # if self.rotation:
+        #     raise NotImplementedError
+        #     # self.data = dataset + [(d[1], d[0]) for d in dataset]
+        # else:
+        #     self.data = dataset
+        self.data = dataset
         self.R = radius
         self._name = name
         self._model = gp.Model(self._name)
