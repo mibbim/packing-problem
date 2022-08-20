@@ -56,7 +56,8 @@ class OPP:
 
         return x, y, delta
 
-    def _add_constr(self, x, y, delta):
+    def _add_constr(self, variables):
+        x, y, delta = variables
         self._add_xy_boundaries_constr(x, y)
         self._add_no_overlap_constr(x, y, delta)
         self._add_delta_constr(delta)
