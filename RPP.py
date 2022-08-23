@@ -1,6 +1,7 @@
 from typing import Literal, Tuple, List
 
 import gurobipy as gp
+import numpy as np
 from gurobipy import GRB
 
 from OPP import OPP
@@ -26,48 +27,58 @@ class Rpp(OPP):
         else:
             raise NotImplementedError("No value recognized")
 
-        self.a = self.z = self.x = self.y = self.delta = None
+        self._a = self._z = self._x = self._y = self._delta = None
 
         super().__init__(dataset=self.data, radius=radius, rotation=self.rotation, name=name)
         # self.rotation = rotation
 
-    def reset_model(self):
+    @property
+    def accepted(self):
+        assert self.is_solved
+        return np.array([i for i in self._items if round(self._a[i].x)])
+
+    def build_model(self):
         self._model = gp.Model(self._name)
         variables = self._add_variables()
-        self.a, self.z, self.x, self.y, self.delta = variables
+        self._a, self._z, self._x, self._y, self._delta = variables
         self._add_constr(variables)
-        self._model.setObjective(sum(self.a[i] * self._v[i] for i in self._items), GRB.MAXIMIZE)
+        self._model.setObjective(sum(self._a[i] * self._v[i] for i in self._items), GRB.MAXIMIZE)
         return variables
 
-    def display(self):
+    def display(self, plot=True):
         print(f"\n\n___________ Solution of problem: {self._name} ___________")
-        accepted = [i for i in self._items if self.a[i].x > 1e-6]
         if self.rotation:
             for i in range(self._N // 2):
-                if i in accepted:
-                    print(f"Accepted item {i}, at position ({self.x[i].x},{self.y[i].x})")
-                if i + self._N // 2 in accepted:
+                if i in self.accepted:
+                    print(f"Accepted item {i}, at position ({self._x[i].x},{self._y[i].x})")
+                if i + self._N // 2 in self.accepted:
                     print(f"Accepted item {i} ({i + self._N // 2}), at position "
-                          f"({self.x[i + self._N // 2].x},{self.y[i + self._N // 2].x}) rotated")
+                          f"({self._x[i + self._N // 2].x},{self._y[i + self._N // 2].x}) rotated")
         else:
-            for i in accepted:
-                print(f"Accepted item {i}, at position ({self.x[i].x},{self.y[i].x})")
+            for i in self.accepted:
+                print(f"Accepted item {i}, at position ({self._x[i].x},{self._y[i].x})")
 
-        print("Z:")
-        print(f"   {[j for j in accepted[1:]]}")
-        for i in accepted[:-1]:
-            print(f"{i}:{[self.z[i, j].x for j in accepted[1:]]}")
-        # i = 3
-        # j = 6
-        # print(f"Delta {i}, {j}:")
-        # print(f"{[self.delta[i, j, p].x for p in range(4)]}")
+        if plot:
+            import matplotlib.pyplot as plt
+
+            ax = plt.gca()
+            ax.cla()
+            for p, d in zip(self.accepted_pos, self.accepted_dims):
+                r = plt.Rectangle(p, d[0], d[1], linewidth=1, edgecolor='g', facecolor='none')
+                ax.add_patch(r)
+            c = plt.Circle((self.R, self.R), self.R, alpha=0.5)
+            ax.set_xlim((0, 2 * self.R))
+            ax.set_ylim((0, 2 * self.R))
+            ax.add_patch(c)
+            plt.legend()
+            plt.show()
+
         print(f"__________________________________________________\n\n")
 
     def _add_variables(self):
         a = self._model.addVars(self._N, vtype=GRB.BINARY, name="a")  # acceptance of box i
         z = self._model.addVars(self._N, self._N, vtype=GRB.BINARY, name="z")
         x, y, delta = super()._add_variables()
-
         return a, z, x, y, delta
 
     def _add_constr(self, variables):
@@ -94,7 +105,7 @@ class Rpp(OPP):
         )
         # Theoretical equivalent
         # self._constr["z_def"] = self._model.addConstrs(
-        #     self.z[i, j] == and_(self.a[i], self.a[j]) for i in self._items for j in
+        #     self._z[i, j] == and_(self._a[i], self._a[j]) for i in self._items for j in
         #     range(i + 1, self._N))
 
     def _add_delta_bound_constr(self, z, delta):
