@@ -39,8 +39,6 @@ class CircularContainerCuts(ABC):
         for i, add_cut_method in enumerate(add_cuts_methods):
             add_cut_method(self.model, m[self._s[i]], self._accepted_dims[self._s[i]],
                            a[self._s[i]], self.model.pos[accepted][self._s[i]])
-        # self._add_cuts_s1(self.model, m[self._s[0]], self._accepted_dims[self._s[0]], a[self._s[0]],
-        #                   self.model.pos[accepted][self._s[0]])
 
     @staticmethod
     def _add_cuts_s1(model, m, dims, a, pos):
@@ -115,17 +113,6 @@ class CircularContainerCuts(ABC):
         point_to_check[:, 0][self._bar_set[3]] += self._accepted_dims[:, 0][self._bar_set[3]]
         return point_to_check
 
-    # def compute_variables(self,
-    #                       accepted_pos=None,
-    #                       accepted_dims=None,
-    #                       ):
-    #     if accepted_pos is None:
-    #         accepted_pos = self._accepted_pos
-    #     if accepted_dims is None:
-    #         accepted_dims = self._accepted_dims
-    #
-    #     return bar_set, point_to_check, s
-
 
 if __name__ == "__main__":
     from RPP import Rpp
@@ -141,22 +128,6 @@ if __name__ == "__main__":
     ccc = CircularContainerCuts(rpp)
     A = ccc.get_intersection_point()
     P = ccc._point_to_check
-    if plot:
-        import matplotlib.pyplot as plt
-
-        ax = plt.gca()
-        ax.cla()
-        for p, d in zip(pos, dims):
-            r = plt.Rectangle(p, d[0], d[1], linewidth=1, edgecolor='g', facecolor='none')
-            ax.add_patch(r)
-        c = plt.Circle((R, R), R, alpha=0.5)
-        ax.set_xlim((0, 2 * R))
-        ax.set_ylim((0, 2 * R))
-        ax.scatter(A[:, 0], A[:, 1], label="A", color='r')
-        ax.scatter(P[:, 0], P[:, 1], label="extremes", color='blue')
-        ax.add_patch(c)
-        plt.legend()
-        plt.show()
 
     ccc.add_cuts()
     rpp.optimize()
