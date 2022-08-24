@@ -4,14 +4,15 @@ from RPP import Rpp
 from circular_container_cuts import CircularContainerCuts
 
 
-class CPP(Rpp):
+class Cpp(Rpp):
     def __init__(self,
                  dataset: List[Tuple],
                  values: Literal["count", "volume"],
                  radius: float,
                  rotation: bool = False,
-                 name: str = "2D_Rpp"):
-        super().__init__(dataset, values, radius, rotation, name)
+                 optimizations: List | None = None,
+                 name: str = "2D_Cpp"):
+        super().__init__(dataset, values, radius, rotation, optimizations, name)
         self.ccc = None
 
     def add_tangent_plane_cuts(self):
@@ -37,10 +38,7 @@ class CPP(Rpp):
              for (xi, yi), (li, hi) in zip(pos, dims)
              for ((xa, ya), ma) in zip(a, m)),
             name="s1"
-        )  # for (xi, yi), (li, hi) in zip(pos, dims):
-        #
-        #     for ((xa, ya), ma) in zip(a, m):
-        #         self._model.addConstr((yi + hi <= ya + ma * (xi + li - xa)), name="s1")
+        )
 
     def _add_cuts_s2(self, m, dims, a, pos):
         self._model.addConstrs(
@@ -84,5 +82,5 @@ class CPP(Rpp):
 if __name__ == "__main__":
     R = 1.5
     data = [(0.6, 1.2) for _ in range(10)]
-    cpp = CPP(dataset=data, values="volume", radius=R)
+    cpp = Cpp(dataset=data, values="volume", radius=R, )
     cpp.optimize()

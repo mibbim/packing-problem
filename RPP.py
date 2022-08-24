@@ -13,6 +13,7 @@ class Rpp(Opp):
                  values: Literal["count", "volume"],
                  radius: float,
                  rotation: bool = False,
+                 optimizations: List | None = None,
                  name: str = "2D_Rpp"):
         self.rotation = rotation
 
@@ -30,8 +31,11 @@ class Rpp(Opp):
 
         self._a = self._z = self._x = self._y = self._delta = None
 
-        super().__init__(dataset=self.data, radius=radius, rotation=self.rotation, name=name)
-        # self.rotation = rotation
+        super().__init__(dataset=self.data,
+                         radius=radius,
+                         rotation=self.rotation,
+                         optimizations=optimizations,
+                         name=name)
 
     @property
     def accepted(self):
@@ -43,7 +47,8 @@ class Rpp(Opp):
         variables = self._add_variables()
         self._a, self._z, self._x, self._y, self._delta = variables
         self._add_constr(variables)
-        self._model.setObjective(sum(self._a[i] * self._v[i] for i in self._items), GRB.MAXIMIZE)
+        self._model.setObjective(sum(self._a[i] * self._v[i] for i in self._items),
+                                 GRB.MAXIMIZE)
         return variables
 
     def display(self, plot=True):
@@ -87,7 +92,8 @@ class Rpp(Opp):
         self._add_z_definitions_constr(a, z)
         self._add_no_overlap_constr(x, y, delta)
         self._add_xy_boundaries_constr(x, y)
-        self._add_delta_bound_constr(z, delta)
+        if "delta" is self.optimizizations:
+            self._add_delta_bound_constr(z, delta)
         if self.rotation:
             self._add_rotation_constr(a)
 

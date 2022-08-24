@@ -105,8 +105,7 @@ class Opp:
         x, y, delta = variables
         self._add_xy_boundaries_constr(x, y)
         self._add_no_overlap_constr(x, y, delta)
-        if "delta" is self.optimizizations:
-            self._add_delta_constr(delta)
+        self._add_delta_constr(delta)
 
     def _add_no_overlap_constr(self, x, y, delta):
         self._constr["5"] = self._model.addConstrs(
