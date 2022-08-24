@@ -4,13 +4,14 @@ import gurobipy as gp
 import numpy as np
 from gurobipy import GRB
 
-from OPP import OPP
+from Opp import Opp
 
 
-class Rpp(OPP):
-    def __init__(self, dataset: List[Tuple],
+class Rpp(Opp):
+    def __init__(self,
+                 dataset: List[Tuple],
                  values: Literal["count", "volume"],
-                 radius,
+                 radius: float,
                  rotation: bool = False,
                  name: str = "2D_Rpp"):
         self.rotation = rotation

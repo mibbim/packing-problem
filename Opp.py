@@ -5,7 +5,7 @@ import gurobipy as gp
 from gurobipy import GRB
 
 
-class OPP:
+class Opp:
     def __init__(self, dataset: List[Tuple],
                  radius,
                  rotation: bool = False,
@@ -25,7 +25,7 @@ class OPP:
         self.is_solved = False
         if optimizations is None:
             optimizations = []
-        self.optimizizations = []
+        self.optimizizations = optimizations
         self._constr = {}
 
         directions = 4
@@ -149,9 +149,9 @@ if __name__ == "__main__":
     R = 1.5
     # data = [(1, 2), (3, 1), (3, 1), (2, 1)]
     data = [(1, 2) for _ in range(3)]
-    opp = OPP(dataset=data, radius=R)
+    opp = Opp(dataset=data, radius=R)
     opp.optimize()
     data.append((1, 2))
     print("\n\n___________________________________________________________\n\n")
-    opp = OPP(dataset=data, radius=R)
+    opp = Opp(dataset=data, radius=R)
     opp.optimize()
