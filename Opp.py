@@ -1,24 +1,24 @@
+from itertools import combinations
 from typing import Tuple, List
 
+import os
 import numpy as np
 import gurobipy as gp
-from gurobipy import GRB
 
+from gurobipy import GRB
+os.environ['GRB_LICENSE_FILE'] = "/home/mb/gurobi952/linux64/guroby952/gurobi.lic"
+# GRB_LICENSE_FILE=/home/mb/gurobi952/linux64/guroby952/gurobi.lic
 
 class Opp:
-    def __init__(self, dataset: List[Tuple],
+    def __init__(self,
+                 dataset: List[Tuple],
                  radius,
                  rotation: bool = False,
                  optimizations: List | None = None,
                  name: str = "2D_OPP"):
         self.rotation = rotation
 
-        # if self.rotation:
-        #     raise NotImplementedError
-        #     # self.data = dataset + [(d[1], d[0]) for d in dataset]
-        # else:
-        #     self.data = dataset
-        self.data = dataset
+        self.data = self._handle_data_and_rotation(dataset)
         self.R = radius
         self._name = name
         self._model = gp.Model(self._name)
@@ -38,12 +38,32 @@ class Opp:
 
         self.M = np.ones((self._N, self._N, directions)) * 2 * self.R
 
+        if "big_M" in self.optimizizations:
+            s_l, s_h = self._compute_sagittas()
+            self.M[:, :, 0] -= s_h
+            self.M[:, :, 1] -= s_h
+            self.M[:, :, 2] -= s_l
+            self.M[:, :, 3] -= s_l
+
+            for j in self._items:
+                self.M[:, j, 0] -= s_h
+                self.M[:, j, 1] -= s_h
+                self.M[:, j, 2] -= s_l
+                self.M[:, j, 3] -= s_l
+
+            if self.__class__ == Opp and self.rotation:
+                raise NotImplementedError
+
         self._x = self._y = self._delta = None
         self.build_model()
 
     @property
     def accepted_dims(self):
         return np.stack((self._l[self.accepted], self._h[self.accepted]), axis=1)
+
+    @property
+    def dims(self):
+        return np.stack((self._l, self._h), axis=1)
 
     @property
     def x(self):
@@ -110,22 +130,22 @@ class Opp:
     def _add_no_overlap_constr(self, x, y, delta):
         self._constr["5"] = self._model.addConstrs(
             (x[i] + self._l[i] <= x[j] + self.M[i, j, 0] * (1 - delta[i, j, 0])
-             for i in self._items for j in range(i + 1, self._N)), name="5"
+             for i, j in combinations(self._items, 2)), name="5"
         )
 
         self._constr["6"] = self._model.addConstrs(
             (x[i] >= self._l[j] + x[j] - self.M[i, j, 1] * (1 - delta[i, j, 1])
-             for i in self._items for j in range(i + 1, self._N)), name="6"
+             for i, j in combinations(self._items, 2)), name="6"
         )
 
         self._constr["7"] = self._model.addConstrs(
             (y[i] + self._h[i] <= y[j] + self.M[i, j, 2] * (1 - delta[i, j, 2])
-             for i in self._items for j in range(i + 1, self._N)), name="7"
+             for i, j in combinations(self._items, 2)), name="7"
         )
 
         self._constr["8"] = self._model.addConstrs(
             (y[i] >= self._h[j] + y[j] - self.M[i, j, 3] * (1 - delta[i, j, 3])
-             for i in self._items for j in range(i + 1, self._N)), name="8"
+             for i, j in combinations(self._items, 2)), name="8"
         )
 
     def _add_xy_boundaries_constr(self, x, y):
@@ -136,12 +156,31 @@ class Opp:
 
     def _add_delta_constr(self, delta):
         self._constr["19"] = self._model.addConstrs(
-            (sum(delta[i, j, p] for p in self._directions) >= 1 for i in self._items
-             for j in range(i + 1, self._N)), name="19"
+            (sum(delta[i, j, p] for p in self._directions) >= 1 for i, j in
+             combinations(self._items, 2)), name="19"
         )
 
     def addConstrs(self, constrs, name: str):
         self._constr[name] = self._model.addConstrs(constrs, name)
+
+    def _compute_sagittas(self):
+        s_l = self.R - np.sqrt(self.R * self.R - self._l * self._l * 0.25)
+        s_h = self.R - np.sqrt(self.R * self.R - self._h * self._h * 0.25)
+        return s_l, s_h
+
+    # def _total_area(self):
+    #     return 4 * self.R * self.R
+    def _handle_data_and_rotation(self, dataset):
+        if self.rotation:
+            if self.__class__ == Opp:
+                raise NotImplementedError
+            data = dataset + [(d[1], d[0]) for d in dataset]
+        else:
+            data = dataset
+
+        return data
+
+
 
 
 if __name__ == "__main__":

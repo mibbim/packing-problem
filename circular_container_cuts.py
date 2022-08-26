@@ -8,12 +8,10 @@ NPA = np.ndarray
 class CircularContainerCuts(ABC):
     def __init__(self, model: RPP):
         assert model.is_solved
-        radius, accepted_pos, accepted_dims = model.R, model.accepted_pos, model.accepted_dims
         self.model = model
         self._R: float = model.R
         self.accepted_pos: NPA = model.accepted_pos
         self.accepted_dims: NPA = model.accepted_dims
-        # self._bar_set, self._point_to_check, self._s = self.compute_variables()
         self._bar_set: NPA = self._get_bar_set()
         self._point_to_check: NPA = self._get_point_to_check()
         self._s: NPA = self._get_s()
@@ -23,10 +21,9 @@ class CircularContainerCuts(ABC):
     def s(self):
         return self._s
 
-    def compute_from_model(self, model=None):
-        if model is None:
-            model = self.model
-        return self.__class__(model)
+    @classmethod
+    def compute_from_model(cls, model):
+        return cls(model)
 
     def _get_s(self):
         return self._is_oob(self._point_to_check) & self._bar_set
@@ -49,8 +46,8 @@ class CircularContainerCuts(ABC):
         )
         return bar_set
 
-    def _is_oob(self, points_to_check):
-        return np.linalg.norm(points_to_check - self._R, axis=1) > self._R
+    def _is_oob(self, points_to_check, tol: float = 1e-4):
+        return np.linalg.norm(points_to_check - self._R, axis=1) - self._R > tol
 
     def get_intersection_point(self):
         c_meno_o = self._R - self._point_to_check
