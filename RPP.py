@@ -112,39 +112,42 @@ class Rpp(Opp):
 
     def _add_z_definitions_constr(self, a, z):
         self._constr["2_1"] = self._model.addConstrs(
-            (a[i] + a[j] - 1 <= z[i, j] for i, j in combinations(self._items, 2)),
+            (a[i] + a[j] - 1 <= z[i, j] for i, j in self._items_combinations),
             name="2a"
         )
         self._constr["2_2"] = self._model.addConstrs(
-            (z[i, j] <= a[i] for i, j in combinations(self._items, 2)),
+            (z[i, j] <= a[i] for i, j in self._items_combinations),
             "2b"
         )
         self._constr["3_2"] = self._model.addConstrs(
-            (z[i, j] <= a[j] for i, j in combinations(self._items, 2)),
+            (z[i, j] <= a[j] for i, j in self._items_combinations),
             "3b"
         )
         # Theoretical equivalent
         # self._constr["z_def"] = self._model.addConstrs(
 
-    #     self._z[i, j] == and_(self._a[i], self._a[j]) for i, j in combinations(self._items, 2))
+    #     self._z[i, j] == and_(self._a[i], self._a[j]) for i, j in self._items_combinations)
 
     def _add_delta_bound_constr(self, z, delta):
         """just for speedup"""
         self._constr["4_1"] = self._model.addConstrs(
             (z[i, j] <= sum(delta[i, j, p] for p in self._directions) for i, j in
-             combinations(self._items, 2)), "4a"
+             self._items_combinations), "4a"
         )
         self._constr["4_2"] = self._model.addConstrs(
             (sum(delta[i, j, p] for p in self._directions) <= 2 * z[i, j] for i, j in
-             combinations(self._items, 2)), "4b"
+             self._items_combinations), "4b"
         )
 
     def _add_area_constraint(self, a):
+        acceptable_item_num = self._get_max_acceptable_item_num()
+        self._model.addConstr(sum(a[i] for i in self._items) <= acceptable_item_num, name="area")
+
+    def _get_max_acceptable_item_num(self):
         total_area = self._total_area()
         items_areas = self._get_items_sorted_areas()
         areas_sum = np.cumsum(items_areas)
-        acceptable_item_num = np.sum(areas_sum < total_area)
-        self._model.addConstr(sum(a[i] for i in self._items) <= acceptable_item_num, name="area")
+        return np.sum(areas_sum < total_area)
 
     def _get_items_sorted_areas(self):
         return np.sort(self._l * self._h)
@@ -160,9 +163,6 @@ class Rpp(Opp):
         for s in subsets[infeasible]:
             self._model.addConstr(
                 (sum(a[i] for i in self._items if i in s) <= len(s) - 1),
-                # for s in subsets[infeasible]
-                # (sum(a[i] for i in self._items if i in s) <= len(s) - 1
-                # for s in subsets[infeasible]),
                 name="set_feasibility"
             )
 
