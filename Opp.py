@@ -162,8 +162,6 @@ class Opp:
         s_h = self.R - np.sqrt(self.R * self.R - self._h * self._h * 0.25)
         return s_l, s_h
 
-    # def _total_area(self):
-    #     return 4 * self.R * self.R
     def _handle_data_and_rotation(self, dataset):
         if self.rotation:
             if type(self) is Opp:
