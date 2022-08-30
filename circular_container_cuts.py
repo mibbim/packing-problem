@@ -21,13 +21,20 @@ class CircularContainerCuts(ABC):
     def s(self):
         return self._s
 
-    @classmethod
-    def compute_from_model(cls, model):
-        return cls(model)
+    @property
+    def unfeasible_set(self):
+        return self.s.sum(axis=0).astype(bool)
+
+    @property
+    def feasible_set(self):
+        return np.logical_not(self.unfeasible_set)
+
+    @property
+    def feasible_area(self):
+        return self.accepted_dims[self.feasible_set].prod(axis=1).sum()
 
     def _get_s(self):
         return self._is_oob(self._point_to_check) & self._bar_set
-        # return np.array([s & self._is_oob(self._point_to_check) for s in self._bar_set])
 
     def _get_bar_set(self) -> NPA:
         """
