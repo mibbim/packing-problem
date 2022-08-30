@@ -48,7 +48,7 @@ class Cpp(Rpp):
         super(Cpp, self)._add_constr(variables)
         if "infeasible_pairs" in self.optimizizations:
             self._add_infeasible_pairs_opt(a)
-        if "symmetry" is self.optimizizations:
+        if "symmetry" in self.optimizizations:
             self._break_simmetry(a, x, y)
 
     def _break_simmetry(self, a, x, y):
@@ -74,7 +74,7 @@ class Cpp(Rpp):
                             self._add_cuts_s3,
                             self._add_cuts_s4]
 
-        if "all_tangent" in self.optimizizations or "symmetric_tangent" is self.optimizizations:
+        if "all_tangent" in self.optimizizations or "symmetric_tangent" in self.optimizizations:
             for i, add_cut_method in enumerate(add_cuts_methods):
                 add_cut_method(m[ccc.s[i]], self.dims,
                                a[ccc.s[i]], self.pos)
@@ -139,12 +139,13 @@ class Cpp(Rpp):
             plt.show()
 
     def optimize(self, max_iteration: int = 10, display_each: int = 2):
-        if "objective_bound" is self.optimizizations:
-            self._model.objVal = self._get_objective_bound()
+        if "initial_objective_bound" in self.optimizizations:
+            self._model.Params.BestObjStop = self._get_initial_objective_bound()
         Rpp.optimize(self)
         self.display(title="0")
-        prev_obj_val = self._model.objVal
+        prev_obj_val = self._model.objVal - 1e-4
         self.ccc = CircularContainerCuts(self)
+        prev_feasible_area = self.ccc.feasible_area
         for it in range(1, max_iteration):
             print(f"Iteration: {it}_________________________-")
             if self.ccc.acceptable:
@@ -153,8 +154,10 @@ class Cpp(Rpp):
                 break
             a = self.add_tangent_plane_cuts()
             self._prev_as = np.vstack((self._prev_as, a))
-            if "cutoff" in self.optimizizations:
+            if "objective_bound" in self.optimizizations:
                 self._model.Params.BestObjStop = prev_obj_val
+            if "cutoff" in self.optimizizations:
+                self._model.Params.Cutoff = prev_feasible_area
             super().optimize()
             if it % display_each == 0:
                 self.display(title=f"{it}")
@@ -191,7 +194,7 @@ class Cpp(Rpp):
     def _total_area(self):
         return self.R * self.R * np.pi
 
-    def _get_objective_bound(self):
+    def _get_initial_objective_bound(self):
         if self._values == "volume":
             return self._total_area()
         return self._get_max_acceptable_item_num()
@@ -214,19 +217,22 @@ if __name__ == "__main__":
     start = datetime.now()
     print(start)
     opts = [
-        # "big_M",
-        "delta",
-        "sagitta",
-        "area",
+        # "big_M",  #
+        "delta",  #
+        "sagitta",  #
+        "area",  #
+        "feasible_subsets",  #
+        "infeasible_pairs",  #
+        "symmetry",  #
         "all_tangent",
-        "symmetric_tangent",
-        "cutoff",
-        "feasible_subsets",
-        "infeasible_pairs",
-        "symmetry",
         "objective_bound",
-        "cutoff"
+        "cutoff",
+        "initial_objective_bound",
+
+        # "initial_tangent"
+        # "symmetric_tangent",
     ]
+    print(f"Using optimizations {opts}, {N=}, {circle_area=}, {R=}")
     cpp = Cpp(dataset=data, values="volume", radius=R, optimizations=opts)
     cpp.optimize(10, 1)
     stop = datetime.now()
