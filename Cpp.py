@@ -2,6 +2,7 @@ from typing import Tuple, List, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
+from time import time
 
 from Opp import Opp
 from RPP import Rpp
@@ -138,10 +139,15 @@ class Cpp(Rpp):
             plt.title(title)
             plt.show()
 
-    def optimize(self, max_iteration: int = 10, display_each: int = 2):
+    def optimize(self, max_iteration: int = 10, display_each: int = 2, time_limit: int = np.inf):
         if "initial_objective_bound" in self.optimizizations:
             self._model.Params.BestObjStop = self._get_initial_objective_bound()
+
+        self._model.Params.TimeLimit = time_limit
+        start = time()
         Rpp.optimize(self)
+        elapsed = time() - start
+
         self.display(title="0")
         prev_obj_val = self._model.objVal - 1e-4
         self.ccc = CircularContainerCuts(self)
@@ -158,7 +164,9 @@ class Cpp(Rpp):
                 self._model.Params.BestObjStop = prev_obj_val
             if "cutoff" in self.optimizizations:
                 self._model.Params.Cutoff = prev_feasible_area
+            self._model.Params.TimeLimit = max(time_limit - elapsed, 0)
             super().optimize()
+            elapsed = time() - start
             if it % display_each == 0:
                 self.display(title=f"{it}")
             self.ccc = CircularContainerCuts(self)
@@ -211,13 +219,11 @@ if __name__ == "__main__":
     packs_area = np.sum(data[:, 0] * data[:, 1])
     circle_area = rho * packs_area
     R = np.sqrt(circle_area / np.pi)
-    # R = 1.5
-    # data = [(0.6, 1.2) for _ in range(10)]
-    # data = [(0.6, 1.2) for _ in range(30)]
+
     start = datetime.now()
     print(start)
     opts = [
-        # "big_M",  #
+        "big_M",  #
         "delta",  #
         "sagitta",  #
         "area",  #
@@ -234,6 +240,6 @@ if __name__ == "__main__":
     ]
     print(f"Using optimizations {opts}, {N=}, {circle_area=}, {R=}")
     cpp = Cpp(dataset=data, values="volume", radius=R, optimizations=opts)
-    cpp.optimize(10, 1)
+    cpp.optimize(10, 1, time_limit=500)
     stop = datetime.now()
     print(start, stop, stop - start)
