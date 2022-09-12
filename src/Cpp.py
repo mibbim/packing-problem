@@ -4,9 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from time import time
 
-from Opp import Opp
-from RPP import Rpp
-from circular_container_cuts import CircularContainerCuts
+from src.Opp import Opp
+from src.RPP import Rpp
+from src.circular_container_cuts import CircularContainerCuts
+
+cut_tol = 1e-4
 
 
 class Cpp(Rpp):
@@ -143,34 +145,54 @@ class Cpp(Rpp):
         if "initial_objective_bound" in self.optimizizations:
             self._model.Params.BestObjStop = self._get_initial_objective_bound()
 
+        if "initial_cutoff" in self.optimizizations:
+            self._model.Params.Cutoff = self._get_initial_cutoff()
+
         self._model.Params.TimeLimit = time_limit
         start = time()
         Rpp.optimize(self)
         elapsed = time() - start
 
         self.display(title="0")
-        prev_obj_val = self._model.objVal - 1e-4
         self.ccc = CircularContainerCuts(self)
-        prev_feasible_area = self.ccc.feasible_area
+        prev_feasible_obj = min(self.accepted_values)
         for it in range(1, max_iteration):
+            prev_obj_val = self._model.objVal
+            prev_feasible_obj = max(prev_feasible_obj, self.ccc.feasible_obj)
+
             print(f"Iteration: {it}_________________________-")
+
             if self.ccc.acceptable:
                 print(f"Solution found at iteration {it}******************************************")
                 self.display(title=f"Solution Found: {it}")
                 break
+
+            if elapsed < 0:
+                # TODO implement history and get best solution
+                print(f"Best found at iteration {it}******************************************")
+
+                break
+
             a = self.add_tangent_plane_cuts()
             self._prev_as = np.vstack((self._prev_as, a))
+
             if "objective_bound" in self.optimizizations:
-                self._model.Params.BestObjStop = prev_obj_val
+                self._model.Params.BestObjStop = prev_obj_val + 1e-4
+                print(f"Objective bound: {prev_obj_val}")
+
             if "cutoff" in self.optimizizations:
-                self._model.Params.Cutoff = prev_feasible_area
+                self._model.Params.Cutoff = prev_feasible_obj - 1e-4
+                print(f"Cutoff value: {prev_feasible_obj}")
+
             self._model.Params.TimeLimit = max(time_limit - elapsed, 0)
             super().optimize()
             elapsed = time() - start
+
             if it % display_each == 0:
                 self.display(title=f"{it}")
             self.ccc = CircularContainerCuts(self)
         print()
+        return elapsed
 
     def _add_xy_boundaries_constr(self, x, y):
         if "sagitta" in self.optimizizations:
@@ -207,11 +229,14 @@ class Cpp(Rpp):
             return self._total_area()
         return self._get_max_acceptable_item_num()
 
+    def _get_initial_cutoff(self):
+        return max(self.values)
+
 
 if __name__ == "__main__":
     from datetime import datetime
 
-    N = 20
+    N = 10  # 20
     rho = 0.33
 
     rng = np.random.default_rng(42)
@@ -234,6 +259,7 @@ if __name__ == "__main__":
         "objective_bound",
         "cutoff",
         "initial_objective_bound",
+        "initial_cutoff"
 
         # "initial_tangent"
         # "symmetric_tangent",
