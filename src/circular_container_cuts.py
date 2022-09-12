@@ -1,12 +1,12 @@
 from abc import ABC
 import numpy as np
-import RPP
+from src.RPP import Rpp
 
 NPA = np.ndarray
 
 
 class CircularContainerCuts(ABC):
-    def __init__(self, model: RPP):
+    def __init__(self, model: Rpp):
         assert model.is_solved
         self.model = model
         self._R: float = model.R
@@ -16,6 +16,8 @@ class CircularContainerCuts(ABC):
         self._point_to_check: NPA = self._get_point_to_check()
         self._s: NPA = self._get_s()
         self.acceptable = not bool(self._s.sum())
+        # self.values = model.values
+        self.accepted_values = model.accepted_values
 
     @property
     def s(self):
@@ -32,6 +34,10 @@ class CircularContainerCuts(ABC):
     @property
     def feasible_area(self):
         return self.accepted_dims[self.feasible_set].prod(axis=1).sum()
+
+    @property
+    def feasible_obj(self):
+        return self.accepted_values[self.feasible_set].sum()
 
     def _get_s(self):
         return self._is_oob(self._point_to_check) & self._bar_set
@@ -53,7 +59,7 @@ class CircularContainerCuts(ABC):
         )
         return bar_set
 
-    def _is_oob(self, points_to_check, tol: float = 1e-4):
+    def _is_oob(self, points_to_check, tol: float = 1e-3):
         return np.linalg.norm(points_to_check - self._R, axis=1) - self._R > tol
 
     def get_intersection_point(self):
@@ -75,7 +81,7 @@ if __name__ == "__main__":
 
     plot = False
     R = 1.5
-    data = [(0.6, 1.2) for _ in range(10)]
+    data = np.array([(0.6, 1.2) for _ in range(10)])
     rpp = Rpp(dataset=data, values="volume", radius=R)
     rpp.optimize()
     rpp.display()
