@@ -1,10 +1,10 @@
-from typing import Literal, Tuple, List
+from typing import Literal, List
 
 import numpy as np
 from itertools import combinations, chain
 from gurobipy import GRB
 
-from Opp import Opp
+from src.Opp import Opp
 
 
 def powerset(iterable, r):
@@ -18,7 +18,7 @@ def powerset(iterable, r):
 
 class Rpp(Opp):
     def __init__(self,
-                 dataset: List[Tuple],
+                 dataset: np.ndarray,
                  values: Literal["count", "volume"],
                  radius: float,
                  rotation: bool = False,
@@ -27,15 +27,16 @@ class Rpp(Opp):
         self.rotation = rotation
         self.data = self._handle_data_and_rotation(dataset)
         if values == "count":
-            self._v = [1 for _ in self.data]
+            self._v = np.ones(self.data.shape[0])  # [1 for _ in self.data]
         elif values == "volume":
-            self._v = [l * h for (l, h) in self.data]
+            # self._v = [l * h for (l, h) in self.data]
+            self._v = np.prod(self.data, axis=1)
         else:
             raise NotImplementedError("No value recognized")
 
         self._a = self._z = self._x = self._y = self._delta = None
 
-        super().__init__(dataset=self.data,
+        super().__init__(dataset=dataset,
                          radius=radius,
                          rotation=self.rotation,
                          optimizations=optimizations,
@@ -45,6 +46,14 @@ class Rpp(Opp):
     def accepted(self):
         assert self.is_solved
         return np.array([i for i in self._items if round(self._a[i].x)])
+
+    @property
+    def values(self):
+        return self._v
+
+    @property
+    def accepted_values(self):
+        return self.values[self.accepted]
 
     def build_model(self):
         variables = self._add_variables()
@@ -171,11 +180,14 @@ class Rpp(Opp):
             a[i] + a[i + self._N // 2] <= 1 for i in range(self._N // 2)
         )
 
+    def _total_area(self):
+        return self.R * self.R
+
 
 if __name__ == "__main__":
     R = 1.5
     # data = [(1, 2), (3, 1), (3, 1), (2, 1)]
-    data = [(1, 2) for _ in range(4)]
+    data = np.array([(1, 2) for _ in range(4)])
 
     rpp = Rpp(dataset=data, values="volume", radius=R)
     rpp.optimize()

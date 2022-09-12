@@ -1,5 +1,5 @@
 from itertools import combinations
-from typing import Tuple, List
+from typing import List
 
 import os
 import numpy as np
@@ -9,12 +9,14 @@ from gurobipy import GRB
 
 os.environ['GRB_LICENSE_FILE'] = "/home/mb/gurobi952/linux64/guroby952/gurobi.lic"
 
+NPA = np.ndarray
+
 
 # GRB_LICENSE_FILE=/home/mb/gurobi952/linux64/guroby952/gurobi.lic
 
 class Opp:
     def __init__(self,
-                 dataset: List[Tuple],
+                 dataset: NPA,
                  radius,
                  rotation: bool = False,
                  optimizations: List[str] | None = None,
@@ -162,11 +164,11 @@ class Opp:
         s_h = self.R - np.sqrt(self.R * self.R - self._h * self._h * 0.25)
         return s_l, s_h
 
-    def _handle_data_and_rotation(self, dataset):
+    def _handle_data_and_rotation(self, dataset: NPA):
         if self.rotation:
             if type(self) is Opp:
                 raise NotImplementedError
-            data = dataset + [(d[1], d[0]) for d in dataset]
+            data = np.vstack((dataset, dataset[:, ::-1]))
         else:
             data = dataset
 
@@ -176,10 +178,10 @@ class Opp:
 if __name__ == "__main__":
     R = 1.5
     # data = [(1, 2), (3, 1), (3, 1), (2, 1)]
-    data = [(1, 2) for _ in range(3)]
+    data = np.array([(1, 2) for _ in range(3)])
     opp = Opp(dataset=data, radius=R)
     opp.optimize()
-    data.append((1, 2))
+    data = np.array([(1, 2) for _ in range(4)])
     print("\n\n___________________________________________________________\n\n")
     opp = Opp(dataset=data, radius=R)
     opp.optimize()
