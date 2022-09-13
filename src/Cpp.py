@@ -25,6 +25,22 @@ class Cpp(Rpp):
         self.ccc = None
         self._prev_as = np.empty((0, 2))
 
+    @property
+    def area(self):
+        assert self.is_solved
+        return self.accepted_dims.prod(axis=1).sum()
+
+    @property
+    def count(self):
+        assert self.is_solved
+        return self.accepted.shape[0]
+
+    @property
+    def obj_val(self):
+        assert self.is_solved
+        return self._model.getObjective().getValue()
+
+
     def _compute_M(self):
         M = super(Cpp, self)._compute_M()
         if "big_M" in self.optimizizations:
