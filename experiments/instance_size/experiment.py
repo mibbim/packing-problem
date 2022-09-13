@@ -52,9 +52,16 @@ def measure(obj, rotation, rho, N, d, time_threshold, ):
         now=datetime.now())
     cpp._model.Params.LogToConsole = 0
     time = cpp.optimize(1000, 1000, time_limit=time_threshold)
-    print(f"{obj} problem with {rotation=}, {rho=}, {N=}, {time=}")
+    area = cpp.area
+    count = cpp.count
+    obj_val = cpp.obj_val
+    print(
+        f"{obj} problem with {rotation=}, {rho=}, {N=}, {time=}, {area=}, {count=}, {obj_val=}",
+    )
     with open('summary.txt', 'a') as summary_file:
-        print(f"{obj} problem with {rotation=}, {rho=}, {N=}, {time=}", file=summary_file)
+        print(
+            f"{obj} problem with {rotation=}, {rho=}, {N=}, {time=}, {area=}, {count=}, {obj_val=}",
+            file=summary_file)
 
 
 def main():
@@ -63,12 +70,12 @@ def main():
     for obj in ["count", "volume"]:
         for rotation in (True, False):
             for rho in (0.2, 0.4, 0.6, 0.8, 1):
-                for N in np.arange(10, 30 + 1, 5):
+                for N in np.arange(18, 30 + 1, 5):
                     for i, d in enumerate(datasets):
                         try:
                             measure(obj, rotation, rho, N, d, time_threshold)
                         except RuntimeError:
-                            pass
+                            continue
 
         pass
 
