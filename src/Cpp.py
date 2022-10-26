@@ -11,6 +11,41 @@ from src.circular_container_cuts import CircularContainerCuts
 cut_tol = 1e-4
 
 
+class Solution:
+
+    def __init__(self, objective, positions, dimensions):
+        self._obj = objective
+        self._positions = positions
+        self._dims = dimensions
+
+    @property
+    def obj(self):
+        return self._obj
+
+    @property
+    def pos(self):
+        return self._positions
+
+    @property
+    def dims(self):
+        return self._dims
+
+    def as_dict(self):
+        return {
+            "obj": self.obj,
+            "pos": self.pos,
+            "dims": self.dims,
+        }
+
+
+class BestSolution(Solution):
+    def update(self, new_solution: Solution):
+        if new_solution.obj > self.obj:
+            self._obj = new_solution.obj
+            self._positions = new_solution.pos
+            self._dims = new_solution.dims
+
+
 class Cpp(Rpp):
     def __init__(self,
                  dataset: List[Tuple],
@@ -19,11 +54,13 @@ class Cpp(Rpp):
                  rotation: bool = False,
                  optimizations: List | None = None,
                  name: str = "2D_Cpp"):
+
         feasible_data = self._get_feasible_items(radius, dataset)
         Rpp.__init__(self, feasible_data, values, radius, rotation, optimizations, name)
         self._values = values
         self.ccc = None
         self._prev_as = np.empty((0, 2))
+        self._best_sol = BestSolution(0, [], [])
 
     @property
     def area(self):
@@ -172,6 +209,7 @@ class Cpp(Rpp):
         self.display(title="0", plot=plot, show=show)
         self.ccc = CircularContainerCuts(self)
         prev_feasible_obj = min(self.accepted_values)
+        history = []
         for it in range(1, max_iteration):
             prev_obj_val = self._model.objVal
             prev_feasible_obj = max(prev_feasible_obj, self.ccc.feasible_obj)
@@ -183,7 +221,13 @@ class Cpp(Rpp):
                 self.display(title=f"Solution Found: {it}", plot=plot, show=show)
                 break
 
-            if elapsed < 0:
+            if elapsed < 0:  # time_limit:
+                solution = Solution(objective=self.ccc.feasible_obj,
+                                    positions=self.accepted_pos[self.ccc.feasible_set],
+                                    dimensions=self.accepted_dims[self.ccc.feasible_set]
+                                    )
+                history.append(solution)
+                self._best_sol.update(self.ccc.feasible_obj)
                 # TODO implement history and get best solution
                 print(f"Best found at iteration {it}******************************************")
 
@@ -282,6 +326,6 @@ if __name__ == "__main__":
     ]
     print(f"Using optimizations {opts}, {N=}, {circle_area=}, {R=}")
     cpp = Cpp(dataset=data, values="volume", radius=R, optimizations=opts)
-    cpp.optimize(10, 1, time_limit=500)
+    cpp.optimize(10, 1, time_limit=5)
     stop = datetime.now()
     print(start, stop, stop - start)
