@@ -74,9 +74,9 @@ def main():
                         try:
                             measure(obj, rotation, rho, N, d, time_threshold)
                         except AttributeError:
-                            print(
+                            logger.info(
                                 f"Attribute Error Occured at {obj=} {rotation=}, {rho=}, {N=}   {i=}")
-                            continue
+
 
         pass
 
