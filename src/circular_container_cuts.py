@@ -10,14 +10,15 @@ class CircularContainerCuts(ABC):
         assert model.is_solved
         self.model = model
         self._R: float = model.R
+
         self.accepted_pos: NPA = model.accepted_pos
         self.accepted_dims: NPA = model.accepted_dims
+
         self._bar_set: NPA = self._get_bar_set()
         self._point_to_check: NPA = self._get_point_to_check()
         self._s: NPA = self._get_s()
         self.acceptable = not bool(self._s.sum())
         # self.values = model.values
-        self.accepted_values = model.accepted_values
 
     @property
     def s(self):
@@ -37,7 +38,7 @@ class CircularContainerCuts(ABC):
 
     @property
     def feasible_obj(self):
-        return self.accepted_values[self.feasible_set].sum()
+        return self.model._accepted_values[self.feasible_set].sum()
 
     def _get_s(self):
         return self._is_oob(self._point_to_check) & self._bar_set

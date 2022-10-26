@@ -6,7 +6,7 @@ from time import time
 
 from src.Opp import Opp
 from src.RPP import Rpp
-from src.Solution import BestSolution, Solution
+from src.Solution import BestSolution
 from src.circular_container_cuts import CircularContainerCuts
 
 cut_tol = 1e-4
@@ -26,7 +26,7 @@ class Cpp(Rpp):
         self._values = values
         self.ccc = None
         self._prev_as = np.empty((0, 2))
-        self._best_sol = BestSolution(0, [], [])
+        self._best_sol = BestSolution(0, np.array([]), np.array([]))
 
     @property
     def area(self):
@@ -174,7 +174,8 @@ class Cpp(Rpp):
 
         self.display(title="0", plot=plot, show=show)
         self.ccc = CircularContainerCuts(self)
-        prev_feasible_obj = min(self.accepted_values)
+
+        prev_feasible_obj = min(self._accepted_values)
         history = []
         for it in range(1, max_iteration):
             prev_obj_val = self._model.objVal
@@ -187,17 +188,15 @@ class Cpp(Rpp):
                 self.display(title=f"Solution Found: {it}", plot=plot, show=show)
                 break
 
-            if elapsed < 0:  # time_limit:
-                solution = Solution(objective=self.ccc.feasible_obj,
-                                    positions=self.accepted_pos[self.ccc.feasible_set],
-                                    dimensions=self.accepted_dims[self.ccc.feasible_set]
-                                    )
-                history.append(solution)
-                self._best_sol.update(self.ccc.feasible_obj)
-                # TODO implement history and get best solution
-                print(f"Best found at iteration {it}******************************************")
-
-                break
+            if elapsed < time_limit:
+                # solution = Solution(
+                #     positions=self.accepted_pos[self.ccc.feasible_set],
+                #     dimensions=self.accepted_dims[self.ccc.feasible_set],
+                #     values=self._accepted_values[self.ccc.feasible_set],
+                # )
+                history.append(self.solution)
+                self._best_sol.update(self.solution)
+                # print(f"Best found at iteration {it}******************************************")
 
             a = self.add_tangent_plane_cuts()
             self._prev_as = np.vstack((self._prev_as, a))

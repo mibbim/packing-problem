@@ -7,6 +7,8 @@ import gurobipy as gp
 
 from gurobipy import GRB
 
+from src.Solution import Solution
+
 os.environ['GRB_LICENSE_FILE'] = "/home/mb/gurobi952/linux64/guroby952/gurobi.lic"
 
 NPA = np.ndarray
@@ -52,6 +54,15 @@ class Opp:
 
     def _compute_M(self):
         return np.ones((self._N, self._N, 4)) * 2 * self.R
+
+    @property
+    def solution(self):
+        assert self.is_solved
+        return Solution(self.accepted_pos, self.accepted_dims, self._accepted_values)
+
+    @property
+    def _accepted_values(self):
+        return np.ones_like(self.accepted_x)
 
     @property
     def accepted_dims(self):

@@ -52,7 +52,7 @@ class Rpp(Opp):
         return self._v
 
     @property
-    def accepted_values(self):
+    def _accepted_values(self):
         return self.values[self.accepted]
 
     def build_model(self):
