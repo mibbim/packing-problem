@@ -40,7 +40,6 @@ class Cpp(Rpp):
         assert self.is_solved
         return self._model.getObjective().getValue()
 
-
     def _compute_M(self):
         M = super(Cpp, self)._compute_M()
         if "big_M" in self.optimizizations:
@@ -153,11 +152,12 @@ class Cpp(Rpp):
             for (xa, ya), ma in zip(a_s, m):
                 ax.plot(xx, ya + (xx - xa) * ma)
             ax.scatter(points.T[0], points.T[1])
-        if show:
-            plt.title(title)
-            plt.show()
+            if show:
+                plt.title(title)
+                plt.show()
 
-    def optimize(self, max_iteration: int = 10, display_each: int = 2, time_limit: int = np.inf):
+    def optimize(self, max_iteration: int = 10, display_each: int = 2, time_limit: int = np.inf,
+                 plot: bool = True, show: bool = True):
         if "initial_objective_bound" in self.optimizizations:
             self._model.Params.BestObjStop = self._get_initial_objective_bound()
 
@@ -169,7 +169,7 @@ class Cpp(Rpp):
         Rpp.optimize(self)
         elapsed = time() - start
 
-        self.display(title="0")
+        self.display(title="0", plot=plot, show=show)
         self.ccc = CircularContainerCuts(self)
         prev_feasible_obj = min(self.accepted_values)
         for it in range(1, max_iteration):
@@ -180,7 +180,7 @@ class Cpp(Rpp):
 
             if self.ccc.acceptable:
                 print(f"Solution found at iteration {it}******************************************")
-                self.display(title=f"Solution Found: {it}")
+                self.display(title=f"Solution Found: {it}", plot=plot, show=show)
                 break
 
             if elapsed < 0:
@@ -205,7 +205,7 @@ class Cpp(Rpp):
             elapsed = time() - start
 
             if it % display_each == 0:
-                self.display(title=f"{it}")
+                self.display(title=f"{it}", plot=plot, show=show)
             self.ccc = CircularContainerCuts(self)
         print()
         return elapsed
