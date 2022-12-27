@@ -2,9 +2,11 @@ from typing import Literal, List
 
 import numpy as np
 from itertools import combinations, chain
-from gurobipy import GRB
+from gurobipy import GRB, tupledict
 
 from src.Opp import Opp
+
+DecisionVariable = tupledict
 
 
 def powerset(iterable, r):
@@ -106,6 +108,7 @@ class Rpp(Opp):
         return a, z, x, y, delta
 
     def _add_constr(self, variables):
+        a: DecisionVariable  # decision variable: acceptance of box i
         a, z, x, y, delta = variables
         self._add_z_definitions_constr(a, z)
         self._add_no_overlap_constr(x, y, delta)
@@ -149,10 +152,18 @@ class Rpp(Opp):
         )
 
     def _add_area_constraint(self, a):
+        """
+        Add an upper bound on the number of the accepted items based on
+        the sum of the areas of smallest accepted items.
+        Refer to section 3.5.2 of the paper.
+        Correspond to inequality (31) in the paper also referred as VI2.
+        """
         acceptable_item_num = self._get_max_acceptable_item_num()
         self._model.addConstr(sum(a[i] for i in self._items) <= acceptable_item_num, name="area")
 
     def _get_max_acceptable_item_num(self):
+        """Computes the upper bound on the number of the accepted items based on
+        the sum of the areas of smallest accepted items."""
         total_area = self._total_area()
         items_areas = self._get_items_sorted_areas()
         areas_sum = np.cumsum(items_areas)
@@ -161,18 +172,17 @@ class Rpp(Opp):
     def _get_items_sorted_areas(self):
         return np.sort(self._l * self._h)
 
-    def _add_feasible_subsets(self, a):
+    def _add_feasible_subsets(self, acceptance_decision_variables):
         max_k = np.ceil(np.sqrt(self.dims.shape[0])).astype(int)
 
         subsets = np.array(powerset(self._items, max_k), dtype=object)
         areas = self._l * self._h
         subsets_total_areas = np.array([areas[s].sum() for s in subsets])
         infeasible = subsets_total_areas > self._total_area()
-        # infeasible = [1, 3, 4, 300, -1]
         for s in subsets[infeasible]:
             self._model.addConstr(
-                (sum(a[i] for i in self._items if i in s) <= len(s) - 1),
-                name="set_feasibility"
+                (sum(acceptance_decision_variables[i] for i in self._items if i in s) <= len(
+                    s) - 1), name="set_feasibility"
             )
 
     def _add_rotation_constr(self, a):

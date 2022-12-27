@@ -1,13 +1,22 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+
 class Solution:
 
-    def __init__(self, positions, dimensions, values):
-        self._values = values
+    def __init__(self, positions=np.empty((0, 2)), dimensions=np.empty((0, 2)),
+                 values=np.empty((0, 1))):
         self._positions = positions
         self._dims = dimensions
+        self._values = values
 
     @property
     def obj(self):
         return self._values.sum()
+
+    @property
+    def area(self):
+        return self._dims.prod(axis=1).sum()
 
     @property
     def pos(self):
@@ -28,6 +37,36 @@ class Solution:
             "dims": self.dims,
             "values": self._values
         }
+
+    def display(self, R: float, ax=None, color=None):
+        if ax is None:
+            fig, ax = plt.subplots()
+        for i, (pos, dim) in enumerate(zip(self.pos, self.dims)):
+            draw_rectangle_with_number_in_center(ax, pos[0], pos[1], dim[0], dim[1], i, color=color)
+
+        draw_circle(ax, R, R, R)
+
+
+def draw_circle(ax, x, y, radius, color="c"):
+    circle = plt.Circle((x, y), radius, color=color, fill=True, alpha=0.2)
+    ax.add_artist(circle)
+
+
+def draw_rectangle(ax, x, y, width, height, color="g", linewidth: float = 1):
+    rectangle = plt.Rectangle((x, y), width, height,
+                              linewidth=linewidth, edgecolor=color,
+                              facecolor='none')
+    ax.add_artist(rectangle)
+
+
+def draw_rectangle_with_number_in_center(ax, x, y, width, height, number, color="g"):
+    draw_rectangle(ax, x, y, width, height, color=color, linewidth=0.5)
+    ax.annotate(str(number), xy=(x + width / 2, y + height / 2))
+
+
+def add_solution_rectangles(ax, solution: Solution, color="g"):
+    for (pos, dims) in zip(solution.pos, solution.dims):
+        draw_rectangle(ax, pos[0], pos[1], dims[0], dims[1], color=color)
 
 
 class BestSolution(Solution):

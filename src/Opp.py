@@ -57,6 +57,10 @@ class Opp:
 
     @property
     def solution(self):
+        return self.gurobi_solution
+
+    @property
+    def gurobi_solution(self):
         assert self.is_solved
         return Solution(self.accepted_pos, self.accepted_dims, self._accepted_values)
 
@@ -118,6 +122,9 @@ class Opp:
 
     def optimize(self):
         self._model.optimize()
+        if self._model.SolCount < 1:
+            # if self._model.Status == 9:  # time limit exceed: no solution Found
+            return
         self.is_solved = True
 
     def _add_variables(self):
@@ -156,6 +163,12 @@ class Opp:
         )
 
     def _add_xy_boundaries_constr(self, x, y):
+        """
+        Add the boundaries constraints that the x and y coordinates of the items.
+        This is the more permissive one, it simply says that the x and y coordinates
+        should be inside the rectangle of size 2R x 2R.
+        These constraints correspond to the constraints 10 and 11 in the paper.
+        """
         self._constr["10"] = self._model.addConstrs(
             (x[i] == [0, 2 * self.R - self._l[i]] for i in self._items), name="10")
         self._constr["11"] = self._model.addConstrs(
