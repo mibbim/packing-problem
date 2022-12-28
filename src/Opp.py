@@ -272,7 +272,7 @@ if __name__ == "__main__":
     # Toy text example
     R = 1.5
     data = np.array([(1, 2) for _ in range(3)])
-    opp = Opp(dataset=data, radius=R, rotation=True)
+    opp = Opp(dataset=data, radius=R, rotation=False)
     opp.optimize()
     data = np.array([(1, 2) for _ in range(4)])
     print("\n\n___________________________________________________________\n\n")
