@@ -5,18 +5,11 @@ import numpy as np
 from time import time
 
 from src.Opp import Opp
-from src.RPP import Rpp
+from src.RPP import Rpp, create_new_sqauared_ax
 from src.Solution import BestSolution, Solution, add_solution_rectangles
 from src.circular_container_cuts import SolutionProcesser
 
 cut_tol = 1e-3
-
-
-def create_new_sqauared_ax(l: float) -> plt.Axes:
-    fig, ax = plt.subplots()
-    ax.set_xlim(0, l)
-    ax.set_ylim(0, l)
-    return ax
 
 
 def compute_tangent_angular_coefficient(R: float, intersection_points: np.ndarray) -> np.ndarray:
@@ -53,7 +46,6 @@ class Cpp(Rpp):
                  name: str = "2D_Cpp"):
 
         feasible_data = self._get_feasible_items(radius, dataset)
-        # Rpp.__init__(self, feasible_data, values, radius, rotation, optimizations, name)
         super().__init__(feasible_data, values, radius, rotation, optimizations, name)
         self._values = values
         self.ccc = None
@@ -63,13 +55,8 @@ class Cpp(Rpp):
         self.optimal_solution_found: bool = False
 
     @property
-    def solution(self):
+    def solution(self) -> Solution:
         return self._best_sol
-
-    # @property
-    # def area(self):
-    #     assert self.is_solved
-    #     return self.accepted_dims.prod(axis=1).sum()
 
     @property
     def count(self):
@@ -169,7 +156,7 @@ class Cpp(Rpp):
             name="s4"
         )
 
-    def display2(self, title: str, plot: bool = True, show: bool = True):
+    def display(self, title: str = "", plot: bool = True, show: bool = True):
         if plot:
             ax = create_new_sqauared_ax(2 * self.R)
 
@@ -244,7 +231,7 @@ class Cpp(Rpp):
         if not self.is_solved:  # the problem is infeasible in the time given
             return elapsed
         self.ccc = SolutionProcesser(self)
-        self.display2(title="0", plot=plot, show=show)
+        self.display(title="0", plot=plot, show=show)
 
         # may none of the initial are acceptable in the initial position
         prev_feasible_obj = min(self._accepted_values)
@@ -257,7 +244,7 @@ class Cpp(Rpp):
 
             if self.ccc.solution_is_acceptable:
                 print(f"Solution found at iteration {it}****************************************")
-                self.display2(title=f"Solution Found: {it}", plot=plot, show=show)
+                self.display(title=f"Solution Found: {it}", plot=plot, show=show)
                 self.optimal_solution_found = True
                 break
 
@@ -275,7 +262,7 @@ class Cpp(Rpp):
             self.ccc = SolutionProcesser(self)
 
             if it % display_each == 0:
-                self.display2(title=f"{it}", plot=plot, show=show)
+                self.display(title=f"{it}", plot=plot, show=show)
 
         return elapsed
 

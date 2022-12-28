@@ -3,10 +3,19 @@ from typing import Literal, List
 import numpy as np
 from itertools import combinations, chain
 from gurobipy import GRB, tupledict
+from matplotlib import pyplot as plt
 
 from src.Opp import Opp
+from src.Solution import add_solution_rectangles, Solution
 
 DecisionVariable = tupledict
+
+
+def create_new_sqauared_ax(l: float) -> plt.Axes:
+    fig, ax = plt.subplots()
+    ax.set_xlim(0, l)
+    ax.set_ylim(0, l)
+    return ax
 
 
 def powerset(iterable, r):
@@ -44,6 +53,14 @@ class Rpp(Opp):
                          name=name)
 
     @property
+    def solution(self):
+        return Solution(
+            self.accepted_pos,
+            self.accepted_dims,
+            self._accepted_values,
+        )
+
+    @property
     def accepted(self):
         assert self.is_solved
         return np.array([i for i in self._items if round(self._a[i].x)])
@@ -64,41 +81,16 @@ class Rpp(Opp):
                                  GRB.MAXIMIZE)
         return variables
 
-    def display(self, plot=True, show=True):
-        print(f"\n\n___________ Solution of problem: {self._name} ___________")
-        if self.rotation:
-            for i in range(self._N // 2):
-                if i in self.accepted:
-                    print(f"Accepted item {i}, at position ({self._x[i].x},{self._y[i].x})")
-                if i + self._N // 2 in self.accepted:
-                    print(f"Accepted item {i} ({i + self._N // 2}), at position "
-                          f"({self._x[i + self._N // 2].x},{self._y[i + self._N // 2].x}) rotated")
-        else:
-            for i in self.accepted:
-                print(f"Accepted item {i}, at position ({self._x[i].x},{self._y[i].x})")
-
+    def display(self, title: str = "", plot: bool = True, show: bool = True):
         if plot:
-            import matplotlib.pyplot as plt
+            ax = create_new_sqauared_ax(2 * self.R)
 
-            ax = plt.gca()
-            ax.cla()
-            for i, (p, d) in enumerate(zip(self.pos, self.dims)):
-                if i in self.accepted:
-                    r = plt.Rectangle(p, d[0], d[1], linewidth=1, edgecolor='g', facecolor='none')
-                    ax.annotate(str(i), xy=p + 0.5 * d)
-                    ax.add_patch(r)
-            c = plt.Circle((self.R, self.R), self.R, alpha=0.5)
-            ax.set_xlim((0, 2 * self.R))
-            ax.set_ylim((0, 2 * self.R))
-            ax.add_patch(c)
-            # plt.legend()
+            self.gurobi_solution.display(self.R, ax=ax, color="r")
+            add_solution_rectangles(ax=ax, solution=self.solution, color="g")
+
             if show:
+                ax.set_title(title)
                 plt.show()
-            else:
-                print(f"__________________________________________________\n\n")
-                return ax
-
-        print(f"__________________________________________________\n\n")
 
     def _add_variables(self):
         a = self._model.addVars(self._N, vtype=GRB.BINARY, name="a")  # acceptance of box i
