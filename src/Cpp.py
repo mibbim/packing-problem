@@ -65,7 +65,7 @@ class Cpp(Rpp):
 
     def _compute_M(self):
         M = super()._compute_M()
-        if "big_M" in self.optimizizations:
+        if "big_M" in self.optimizations:
             return self._optimize_M(M)
         return M
 
@@ -87,9 +87,9 @@ class Cpp(Rpp):
     def _add_constr(self, variables):
         a, z, x, y, delta = variables
         super()._add_constr(variables)
-        if "infeasible_pairs" in self.optimizizations:
+        if "infeasible_pairs" in self.optimizations:
             self._add_infeasible_pairs_opt(a)
-        if "symmetry" in self.optimizizations:
+        if "symmetry" in self.optimizations:
             self._break_simmetry(a, x, y)
 
     def _break_simmetry(self, a, x, y):
@@ -111,7 +111,7 @@ class Cpp(Rpp):
                             self._add_cuts_s3,
                             self._add_cuts_s4]
 
-        if "all_tangent" in self.optimizizations or "symmetric_tangent" in self.optimizizations:
+        if "all_tangent" in self.optimizations or "symmetric_tangent" in self.optimizations:
             for i, add_cut_method in enumerate(add_cuts_methods):
                 add_cut_method(m[ccc.s[i]], self.dims,
                                a[ccc.s[i]], self.pos)
@@ -163,7 +163,7 @@ class Cpp(Rpp):
             self.gurobi_solution.display(self.R, ax=ax, color="r")
             add_solution_rectangles(ax=ax, solution=self.ccc.feasible_solution, color="g")
             a_s = self.ccc.get_intersection_point()[self.ccc.unfeasible_set]
-            if "all_tangent" in self.optimizizations:
+            if "all_tangent" in self.optimizations:
                 a_s = self._prev_as
             draw_cuts(ax=ax, R=self.R, intersection_points=a_s)
             draw_intersection_points(ax=ax, intersection_points=a_s)
@@ -176,12 +176,12 @@ class Cpp(Rpp):
         a = self.add_tangent_plane_cuts()
         self._prev_as = np.vstack((self._prev_as, a))
 
-        if "objective_bound" in self.optimizizations:
+        if "objective_bound" in self.optimizations:
             self._model.Params.BestObjStop = min(self._model.Params.BestObjStop,
                                                  prev_obj_val + 1e-4)
             print(f"Objective bound: {prev_obj_val}")
 
-        if "cutoff" in self.optimizizations:
+        if "cutoff" in self.optimizations:
             self._model.Params.Cutoff = max(prev_feasible_obj - 1e-4, self._model.Params.Cutoff)
             print(f"Cutoff value: {prev_feasible_obj}")
 
@@ -199,10 +199,10 @@ class Cpp(Rpp):
 
     def optimize(self, max_iteration: int = 10, display_each: int = 2, time_limit: int = np.inf,
                  plot: bool = True, show: bool = True):
-        if "initial_objective_bound" in self.optimizizations:
+        if "initial_objective_bound" in self.optimizations:
             self._model.Params.BestObjStop = self._get_initial_objective_bound()
 
-        if "initial_cutoff" in self.optimizizations:
+        if "initial_cutoff" in self.optimizations:
             self._model.Params.Cutoff = self._get_initial_cutoff()
 
         self._model.Params.TimeLimit = time_limit
@@ -252,7 +252,7 @@ class Cpp(Rpp):
         Add the boundary constraints for the x and y variables
         VI1 is to be used then the constraints are tighter because the sagittas are used.
         """
-        if "sagitta" in self.optimizizations:
+        if "sagitta" in self.optimizations:
             self._add_xy_sagitta_boundaries(x, y)
             return
         Opp._add_xy_boundaries_constr(self, x, y)
@@ -271,7 +271,7 @@ class Cpp(Rpp):
             name="11")
 
     def _add_infeasible_pairs_opt(self, a):
-        if "big_M" in self.optimizizations:
+        if "big_M" in self.optimizations:
             bound = self.M
         else:
             bound = self._optimize_M(self.M.copy())
@@ -327,7 +327,7 @@ if __name__ == "__main__":
         # "symmetric_tangent",
     ]
     print(f"Using optimizations {opts}, {N=}, {circle_area=}, {R=}")
-    cpp = Cpp(dataset=data, values="volume", radius=R, optimizations=opts, rotation=False)
+    cpp = Cpp(dataset=data, values="volume", radius=R, optimizations=opts, rotation=True)
     cpp.optimize(10, 1, time_limit=60 * 60)
     stop = datetime.now()
     print([(t, s.obj) for (t, s) in cpp.history])
