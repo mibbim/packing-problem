@@ -26,7 +26,8 @@ Refactoring notes:
         that contains the problem data (l, h, R...)
     - Maybe a Class Circle should be implemented, that implements geometrical 
         properties. Computing Areas, sagittas, etc. should be their responsability.
-    - Maybe reduce the number of properties in the classes OPP. 
+    - Maybe reduce the number of properties in the classes OPP.
+    - Refactor so that add_variables returns a dictionary of variables instead of a tuple. 
 """
 
 
@@ -42,11 +43,11 @@ class Opp:
         self.data = self._handle_data_and_rotation(dataset)
         self.R = radius
         self._name = name
-        self._model: gp.Model = gp.Model(self._name)
+        self._model: gp.Model | None = None
         self.is_solved = False
         if optimizations is None:
             optimizations = []
-        self.optimizizations = optimizations
+        self.optimizations = optimizations
         self._constr = {}
 
         directions = 4
@@ -59,9 +60,6 @@ class Opp:
         self._directions = range(directions)
 
         self.M = self._compute_M()
-
-        if self.__class__ == Opp and self.rotation:
-            raise NotImplementedError
 
         self._x = self._y = self._delta = None
         self.build_model()
@@ -263,9 +261,19 @@ class Opp:
                 # Cannot natively handle rotation, because it is a feasibility problem,
                 # and we do not hava acceptance decision variables.
                 # we need to instantiate a child Class
-                raise NotImplementedError
+                raise AttributeError(
+                    "Cannot instantiate Opp_rot without rotation, use Opp_rot instead")
             return np.vstack((dataset, dataset[:, ::-1]))
         return dataset
+
+    def print_solution(self):
+        """Print the solution."""
+        if not self.is_solved:
+            print("No solution found")
+            return
+        print("Solution found")
+        for i in self._items:
+            print(f"Item {i}: x = {self._x[i].x}, y = {self._y[i].x}")
 
 
 if __name__ == "__main__":
