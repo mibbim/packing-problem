@@ -5,6 +5,8 @@ from itertools import combinations, chain
 from gurobipy import GRB, tupledict
 from matplotlib import pyplot as plt
 
+import gurobipy as gp
+
 from src.Opp import Opp
 from src.Solution import add_solution_rectangles, Solution
 
@@ -36,6 +38,8 @@ class Rpp(Opp):
                  optimizations: List | None = None,
                  name: str = "2D_Rpp"):
         self.rotation = rotation
+        # handle_data_and_rotation is called two times but brings no bug.
+        # With a better design it will be called only once.
         self.data = self._handle_data_and_rotation(dataset)
         if values == "count":
             self._v = np.ones(self.data.shape[0])  # [1 for _ in self.data]
@@ -74,6 +78,7 @@ class Rpp(Opp):
         return self.values[self.accepted]
 
     def build_model(self):
+        self._model = gp.Model(self._name)
         variables = self._add_variables()
         self._a, self._z, self._x, self._y, self._delta = variables
         self._add_constr(variables)
@@ -105,9 +110,9 @@ class Rpp(Opp):
         self._add_no_overlap_constr(x, y, delta)
         self._add_xy_boundaries_constr(x, y)
         self._add_delta_bound_constr(z, delta)
-        if "area" in self.optimizizations:
+        if "area" in self.optimizations:
             self._add_area_constraint(a)
-        if "feasible_subsets" in self.optimizizations:
+        if "feasible_subsets" in self.optimizations:
             self._add_feasible_subsets(a)
         if self.rotation:
             self._add_rotation_constr(a)
