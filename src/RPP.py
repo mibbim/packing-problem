@@ -104,8 +104,7 @@ class Rpp(Opp):
         self._add_z_definitions_constr(a, z)
         self._add_no_overlap_constr(x, y, delta)
         self._add_xy_boundaries_constr(x, y)
-        if "delta" in self.optimizizations:
-            self._add_delta_bound_constr(z, delta)
+        self._add_delta_bound_constr(z, delta)
         if "area" in self.optimizizations:
             self._add_area_constraint(a)
         if "feasible_subsets" in self.optimizizations:
@@ -130,6 +129,7 @@ class Rpp(Opp):
             (z[i, j] <= a[j] for i, j in self._items_combinations),
             "3b"
         )
+
         # Theoretical equivalent
         # self._constr["z_def"] = self._model.addConstrs(
 
@@ -194,7 +194,9 @@ if __name__ == "__main__":
     # data = [(1, 2), (3, 1), (3, 1), (2, 1)]
     data = np.array([(1, 2) for _ in range(4)])
 
-    rpp = Rpp(dataset=data, values="volume", radius=R)
+    opts = []
+
+    rpp = Rpp(data, values="volume", radius=R, optimizations=opts, rotation=False)
     rpp.optimize()
     rpp.display()
 
