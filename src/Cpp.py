@@ -53,7 +53,8 @@ class Cpp(Rpp):
                  name: str = "2D_Cpp"):
 
         feasible_data = self._get_feasible_items(radius, dataset)
-        Rpp.__init__(self, feasible_data, values, radius, rotation, optimizations, name)
+        # Rpp.__init__(self, feasible_data, values, radius, rotation, optimizations, name)
+        super().__init__(feasible_data, values, radius, rotation, optimizations, name)
         self._values = values
         self.ccc = None
         self._prev_as = np.empty((0, 2))
@@ -76,7 +77,7 @@ class Cpp(Rpp):
         return self.accepted.shape[0]
 
     def _compute_M(self):
-        M = super(Cpp, self)._compute_M()
+        M = super()._compute_M()
         if "big_M" in self.optimizizations:
             return self._optimize_M(M)
         return M
@@ -98,7 +99,7 @@ class Cpp(Rpp):
 
     def _add_constr(self, variables):
         a, z, x, y, delta = variables
-        super(Cpp, self)._add_constr(variables)
+        super()._add_constr(variables)
         if "infeasible_pairs" in self.optimizizations:
             self._add_infeasible_pairs_opt(a)
         if "symmetry" in self.optimizizations:
@@ -126,7 +127,7 @@ class Cpp(Rpp):
         if "all_tangent" in self.optimizizations or "symmetric_tangent" in self.optimizizations:
             for i, add_cut_method in enumerate(add_cuts_methods):
                 add_cut_method(m[ccc.s[i]], self.dims,
-                               a[ccc.s[i]], self.pos)  
+                               a[ccc.s[i]], self.pos)
             cuts_added = ccc.s.sum() * self.dims.shape[0]
         else:
             for i, add_cut_method in enumerate(add_cuts_methods):
@@ -330,7 +331,7 @@ class Cpp(Rpp):
 if __name__ == "__main__":
     from datetime import datetime
 
-    N = 20  # 20
+    N = 10  # 20
     rho = 0.8
 
     rng = np.random.default_rng(42)
@@ -359,7 +360,7 @@ if __name__ == "__main__":
         # "symmetric_tangent",
     ]
     print(f"Using optimizations {opts}, {N=}, {circle_area=}, {R=}")
-    cpp = Cpp(dataset=data, values="volume", radius=R, optimizations=opts, rotation=True)
+    cpp = Cpp(dataset=data, values="volume", radius=R, optimizations=opts, rotation=False)
     cpp.optimize(10, 1, time_limit=60 * 60)
     stop = datetime.now()
     print([(t, s.obj) for (t, s) in cpp.history])

@@ -31,7 +31,6 @@ class Rpp(Opp):
         if values == "count":
             self._v = np.ones(self.data.shape[0])  # [1 for _ in self.data]
         elif values == "volume":
-            # self._v = [l * h for (l, h) in self.data]
             self._v = np.prod(self.data, axis=1)
         else:
             raise NotImplementedError("No value recognized")
@@ -123,6 +122,10 @@ class Rpp(Opp):
             self._add_rotation_constr(a)
 
     def _add_z_definitions_constr(self, a, z):
+        """
+        Add the constraints that define the z variables.
+        Correspond to (2) and (3) in the paper.
+        """
         self._constr["2_1"] = self._model.addConstrs(
             (a[i] + a[j] - 1 <= z[i, j] for i, j in self._items_combinations),
             name="2a"
