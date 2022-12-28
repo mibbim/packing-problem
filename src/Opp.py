@@ -11,13 +11,11 @@ from src.Solution import Solution
 from pathlib import Path
 
 script_dir = Path(__file__).parent
-# os.environ['GRB_LICENSE_FILE'] = "/home/mb/gurobi952/linux64/guroby952/gurobi.lic"
 license_file_path = script_dir.parent.parent.parent.parent / "gurobi952/linux64/guroby952/gurobi.lic"
 
 os.environ['GRB_LICENSE_FILE'] = license_file_path.as_posix()
 NPA = np.ndarray
 
-# GRB_LICENSE_FILE=/home/mb/gurobi952/linux64/guroby952/gurobi.lic
 """
 This module contains the implementation of the OPP algorithm.
 For reference, see the paper:
