@@ -171,25 +171,6 @@ class Cpp(Rpp):
                 ax.set_title(title)
                 plt.show()
 
-    # def display(self, plot=True, show=True, title: str | None = None):
-    #     if self.ccc is None:
-    #         super(Cpp, self).display(plot, show)
-    #         return
-    #     if plot:
-    #         ax = super().display(plot, show=False)
-    #         xx = np.linspace(0, self.R * 2, 100)
-    #         points = self.ccc.get_intersection_point()[self.ccc.unfeasible_set]
-    #         a_s = points
-    #         if "all_tangent" in self.optimizizations:
-    #             a_s = self._prev_as
-    #         m = compute_tangent_angular_coefficient(self.R, a_s)
-    #         for (xa, ya), ma in zip(a_s, m):
-    #             ax.plot(xx, ya + (xx - xa) * ma)
-    #         ax.scatter(points.T[0], points.T[1])
-    #         if show:
-    #             plt.title(title)
-    #             plt.show()
-
     def _continue_optimization(self, prev_obj_val: float, prev_feasible_obj: float,
                                time_limit: float, elapsed: float) -> float:
         a = self.add_tangent_plane_cuts()
@@ -331,7 +312,6 @@ if __name__ == "__main__":
     print(start)
     opts = [
         "big_M",  #
-        "delta",  #
         "sagitta",  # VI1
         "area",  # VI2
         "feasible_subsets",  # VI3
