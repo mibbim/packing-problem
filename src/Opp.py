@@ -27,7 +27,8 @@ Refactoring notes:
     - Maybe a Class Circle should be implemented, that implements geometrical 
         properties. Computing Areas, sagittas, etc. should be their responsability.
     - Maybe reduce the number of properties in the classes OPP.
-    - Refactor so that add_variables returns a dictionary of variables instead of a tuple. 
+    - Refactor so that add_variables returns a dictionary of variables instead of a tuple.
+    - Refactor entangling Opp and Opp_rot with composition instead of inheritance.
 """
 
 
@@ -258,9 +259,6 @@ class Opp:
         """Return the data in the right format and handle the rotation."""
         if self.rotation:
             if type(self) is Opp:
-                # Cannot natively handle rotation, because it is a feasibility problem,
-                # and we do not hava acceptance decision variables.
-                # we need to instantiate a child Class
                 raise AttributeError(
                     "Cannot instantiate Opp_rot without rotation, use Opp_rot instead")
             return np.vstack((dataset, dataset[:, ::-1]))
@@ -277,7 +275,7 @@ class Opp:
 
 
 if __name__ == "__main__":
-    # Toy text example
+    # Toy test example
     R = 1.5
     data = np.array([(1, 2) for _ in range(3)])
     opp = Opp(dataset=data, radius=R, rotation=False)
