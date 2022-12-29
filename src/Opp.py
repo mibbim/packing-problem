@@ -257,11 +257,11 @@ class Opp:
 
     def _handle_data_and_rotation(self, dataset: NPA):
         """Return the data in the right format and handle the rotation."""
-        if self.rotation:
-            if type(self) is Opp:
-                raise AttributeError(
-                    "Cannot instantiate Opp_rot without rotation, use Opp_rot instead")
-            return np.vstack((dataset, dataset[:, ::-1]))
+        # if self.rotation:
+        #     if type(self) is Opp:
+        #         raise AttributeError(
+        #             "Cannot instantiate Opp_rot without rotation, use Opp_rot instead")
+        #     return np.vstack((dataset, dataset[:, ::-1]))
         return dataset
 
     def print_solution(self):
@@ -277,10 +277,13 @@ class Opp:
 if __name__ == "__main__":
     # Toy test example
     R = 1.5
-    data = np.array([(1, 2) for _ in range(3)])
+    data = np.array([(1, 2) for _ in range(4)])
     opp = Opp(dataset=data, radius=R, rotation=False)
     opp.optimize()
-    data = np.array([(1, 2) for _ in range(4)])
+    opp.print_solution()
+
+    data = np.array([(1, 2) for _ in range(3)])
     print("\n\n___________________________________________________________\n\n")
     opp = Opp(dataset=data, radius=R)
     opp.optimize()
+    opp.print_solution()
