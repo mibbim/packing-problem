@@ -15,7 +15,7 @@ DecisionVariable = tupledict
 
 
 def create_new_sqauared_ax(l: float) -> plt.Axes:
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(10, 10))
     ax.set_xlim(0, l)
     ax.set_ylim(0, l)
     return ax
