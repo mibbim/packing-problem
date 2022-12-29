@@ -13,7 +13,8 @@ class SolutionProcesser(ABC):
         self._R: float = model.R
 
         self.accepted_pos: NPA = model.accepted_pos
-        self.accepted_dims: NPA = model.accepted_dims
+        self.accepted_dims: NPA = self.swap_dims_if_rotated(model.accepted_dims,
+                                                            model._accepted_rotations)
 
         self._bar_set: NPA = self._get_bar_set()
         self._point_to_check: NPA = self._get_point_to_check()
@@ -21,11 +22,16 @@ class SolutionProcesser(ABC):
         self.solution_is_acceptable: bool = not bool(self._s.sum())
         self.feasible_solution = Solution(
             self.accepted_pos[self.feasible_set],
-            self.accepted_dims[self.feasible_set],
+            model.accepted_dims[self.feasible_set],
             values=self.model._accepted_values[self.feasible_set],
             rotated=self.model._accepted_rotations[self.feasible_set],
         )
-        # self.values = model.values
+
+    @staticmethod
+    def swap_dims_if_rotated(dims: NPA, rotated: NPA) -> NPA:
+        new_dims = dims.copy()
+        new_dims[rotated] = dims[rotated][:, ::-1]
+        return new_dims
 
     @property
     def s(self):

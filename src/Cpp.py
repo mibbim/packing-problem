@@ -118,6 +118,9 @@ class Cpp(Rpp):
             for i, add_cut_method in enumerate(add_cuts_methods):
                 add_cut_method(m[ccc.s[i]], self.dims,
                                a[ccc.s[i]], self.pos)
+                if not self._duplicate:
+                    add_cut_method(m[ccc.s[i]], self.dims[:, ::-1],
+                                   a[ccc.s[i]], self.pos)
             cuts_added = ccc.s.sum() * self.dims.shape[0]
         else:
             for i, add_cut_method in enumerate(add_cuts_methods):
@@ -222,7 +225,7 @@ class Cpp(Rpp):
         for it in range(1, max_iteration):
             prev_obj_val = self._model.objVal
             # we may have no feasible package in solution
-            prev_feasible_obj = max(prev_feasible_obj, self.ccc.feasible_solution.obj)
+            prev_feasible_obj = max(prev_feasible_obj, self.ccc.feasible_solution.objective)
 
             print(f"Iteration: {it}_________________________-")
 
@@ -331,8 +334,20 @@ if __name__ == "__main__":
     ]
     print(f"Using optimizations {opts}, {N=}, {circle_area=}, {R=}")
     cpp = Cpp(dataset=data, values="volume", radius=R, optimizations=opts,
-              rotation=True, )
-    cpp.optimize(10, 1, time_limit=60 * 60)
+              rotation=True,
+              rotate_with_duplicates=False
+              )
+    cpp.optimize(100, 2, time_limit=60 * 60)
     stop = datetime.now()
-    print([(t, s.obj) for (t, s) in cpp.history])
+    print([(t, s.objective) for (t, s) in cpp.history])
     print(start, stop, stop - start)
+
+    data = 4 * rng.random((N, 2)) + 1
+    packs_area = np.sum(data[:, 0] * data[:, 1])
+    circle_area = rho * packs_area
+    R = np.sqrt(circle_area / np.pi)
+    cpp = Cpp(dataset=data, values="volume", radius=R, optimizations=opts,
+              rotation=True,
+              rotate_with_duplicates=True
+              )
+    cpp.optimize(100, 2, time_limit=60 * 60)
