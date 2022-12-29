@@ -46,7 +46,7 @@ class Rpp(Opp_rot):
         self._duplicate = rotate_with_duplicates
         # handle_data_and_rotation is called two times but brings no bug.
         # With a better design it will be called only once.
-        self.data = self._handle_data_and_rotation(dataset)
+        self.data = self._handle_data_duplication(dataset)
         if values == "count":
             self._v = np.ones(self.data.shape[0])
         elif values == "volume":
@@ -109,9 +109,9 @@ class Rpp(Opp_rot):
     def _accepted_rotations(self):
         return self.rotations[self.accepted]
 
-    def _handle_data_and_rotation(self, dataset: NPA):
+    def _handle_data_duplication(self, dataset: NPA):
         """Return the data in the right format and handle the rotation."""
-        if self.rotation and self._duplicate:
+        if self._duplicate:
             return np.vstack((dataset, dataset[:, ::-1]))
         return dataset
 
@@ -152,7 +152,7 @@ class Rpp(Opp_rot):
             self._add_area_constraint(a)
         if "feasible_subsets" in self.optimizations:
             self._add_feasible_subsets(a)
-        if self.rotation and self._duplicate:
+        if self._duplicate:
             self._add_rotation_constr(a)
 
     def _add_z_definitions_constr(self, a, z):

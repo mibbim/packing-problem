@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import List
 
+import numpy as np
+
 from src.Opp import Opp, NPA
 
 from gurobipy import GRB
@@ -27,8 +29,8 @@ class Opp_rot(Opp):
         if self.is_solved:
             return np.array([r.x for r in self._r.values()])
 
-    def _handle_data_and_rotation(self, dataset: NPA):
-        return dataset
+    # def _handle_data_and_rotation(self, dataset: NPA):
+    #     return dataset
 
     def _add_variables(self):
         """Adding the necessary variables to the model"""
@@ -133,8 +135,6 @@ class Opp_rot(Opp):
 
 
 if __name__ == "__main__":
-    import numpy as np
-
     R = 1.5
     data = np.array([(1, 2) for _ in range(4)])
     # FEASIBLE

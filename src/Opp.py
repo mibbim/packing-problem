@@ -41,7 +41,7 @@ class Opp:
                  name: str = "2D_OPP"):
         self.rotation = rotation
 
-        self.data = self._handle_data_and_rotation(dataset)
+        self.data = dataset  # self._handle_data_and_rotation(dataset)
         self.R = radius
         self._name = name
         self._model: gp.Model | None = None
@@ -255,14 +255,14 @@ class Opp:
         s_h = self.R - np.sqrt(self.R * self.R - self._h * self._h * 0.25)
         return s_l, s_h
 
-    def _handle_data_and_rotation(self, dataset: NPA):
-        """Return the data in the right format and handle the rotation."""
-        # if self.rotation:
-        #     if type(self) is Opp:
-        #         raise AttributeError(
-        #             "Cannot instantiate Opp_rot without rotation, use Opp_rot instead")
-        #     return np.vstack((dataset, dataset[:, ::-1]))
-        return dataset
+    # def _handle_data_and_rotation(self, dataset: NPA):
+    #     """Return the data in the right format and handle the rotation."""
+    #     # if self.rotation:
+    #     #     if type(self) is Opp:
+    #     #         raise AttributeError(
+    #     #             "Cannot instantiate Opp_rot without rotation, use Opp_rot instead")
+    #     #     return np.vstack((dataset, dataset[:, ::-1]))
+    #     return dataset
 
     def print_solution(self):
         """Print the solution."""

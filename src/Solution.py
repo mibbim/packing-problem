@@ -1,13 +1,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+NPA = np.ndarray
+
 
 class Solution:
 
-    def __init__(self, positions=np.empty((0, 2)),
-                 dimensions=np.empty((0, 2), ),
-                 values=np.empty((0, 1)),
-                 rotated=None,
+    def __init__(self,
+                 positions: NPA = np.empty((0, 2)),
+                 dimensions: NPA = np.empty((0, 2), ),
+                 values: NPA = np.empty((0, 1)),
+                 rotated: NPA = None,
                  ):
         self._positions = positions
         self._dims = dimensions

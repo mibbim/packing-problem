@@ -22,7 +22,8 @@ class SolutionProcesser(ABC):
         self.feasible_solution = Solution(
             self.accepted_pos[self.feasible_set],
             self.accepted_dims[self.feasible_set],
-            self.model._accepted_values[self.feasible_set],
+            values=self.model._accepted_values[self.feasible_set],
+            rotated=self.model._accepted_rotations[self.feasible_set],
         )
         # self.values = model.values
 
