@@ -38,10 +38,10 @@ class Rpp(Opp_rot):
                  rotation: bool = False,
                  optimizations: List | None = None,
                  name: str = "2D_Rpp",
-                 rotatate_with_duplicates: bool = False,  # TODO: implement
+                 rotate_with_duplicates: bool = False, 
                  ):
         self.rotation = rotation
-        self._duplicate = rotatate_with_duplicates
+        self._duplicate = rotate_with_duplicates
         # handle_data_and_rotation is called two times but brings no bug.
         # With a better design it will be called only once.
         self.data = self._handle_data_and_rotation(dataset)
@@ -66,6 +66,13 @@ class Rpp(Opp_rot):
 
     @property
     def solution(self):
+        if self.rotation and self._duplicate:
+            return Solution(
+                self.accepted_pos,
+                self.accepted_dims,
+                self._accepted_values,
+                self._accepted_rotations,
+            )
         return Solution(
             self.accepted_pos,
             self.accepted_dims,
@@ -84,6 +91,10 @@ class Rpp(Opp_rot):
     @property
     def _accepted_values(self):
         return self.values[self.accepted]
+
+    @property
+    def _accepted_rotations(self):
+        return self.rotations[self.accepted]
 
     def _handle_data_and_rotation(self, dataset: NPA):
         """Return the data in the right format and handle the rotation."""
@@ -213,18 +224,18 @@ if __name__ == "__main__":
     data = np.array([(1, 2) for _ in range(4)])
 
     opts = []
-    rot = Rpp(dataset=data, values="volume", radius=R, rotation=True)
-    rot.optimize()
-    rot.display(title="Rotation")
-    rot.print_solution()
-    exit()
 
     rpp = Rpp(data, values="volume", radius=R, optimizations=opts, rotation=False)
     rpp.optimize()
     rpp.display(title="No rotation")
 
+    rot = Rpp(dataset=data, values="volume", radius=R, rotation=True)
+    rot.optimize()
+    rot.display(title="Rotation")
+    rot.print_solution()
+
     rot_dup = Rpp(dataset=data, values="volume", radius=R, rotation=True,
-                  rotatate_with_duplicates=True)
+                  rotate_with_duplicates=True)
     rot_dup.optimize()
     rot_dup.display(title="Rotation with duplicates")
     print()

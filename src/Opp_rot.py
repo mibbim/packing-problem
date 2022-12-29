@@ -20,6 +20,13 @@ class Opp_rot(Opp):
         self._r: gp.Var | None = None  # rotation variable
         super().__init__(dataset, radius, rotation=rotation, optimizations=optimizations, name=name)
 
+    @property
+    def rotations(self):
+        if self._r is None:
+            return np.zeros(self.pos.shape[0])
+        if self.is_solved:
+            return np.array([r.x for r in self._r])
+
     def _handle_data_and_rotation(self, dataset: NPA):
         return dataset
 
