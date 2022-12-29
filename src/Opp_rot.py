@@ -27,7 +27,7 @@ class Opp_rot(Opp):
         if self._r is None:
             return np.zeros(self.pos.shape[0], dtype=bool)
         if self.is_solved:
-            return np.array([r.x for r in self._r.values()])
+            return np.array([r.x for r in self._r.values()], dtype=bool)
 
     # def _handle_data_and_rotation(self, dataset: NPA):
     #     return dataset
