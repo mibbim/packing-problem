@@ -20,7 +20,7 @@ class Solution:
             self._rotated = np.zeros((positions.shape[0],), dtype=bool)
 
     @property
-    def obj(self):
+    def objective(self):
         return self._values.sum()
 
     @property
@@ -45,7 +45,7 @@ class Solution:
 
     def as_dict(self):
         return {
-            "obj": self.obj,
+            "obj": self.objective,
             "pos": self.pos,
             "dims": self.dims,
             "values": self._values,
@@ -89,7 +89,7 @@ def add_solution_rectangles(ax, solution: Solution, color="g"):
 
 class BestSolution(Solution):
     def update(self, new_solution: Solution):
-        if new_solution.obj > self.obj:
+        if new_solution.objective > self.objective:
             self._values = new_solution.values
             self._positions = new_solution.pos
             self._dims = new_solution.dims
