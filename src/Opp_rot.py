@@ -13,19 +13,24 @@ class Opp_rot(Opp):
 
     def __init__(self,
                  dataset: NPA,
-                 radius,
+                 radius: float,
+                 rotation: bool = True,
                  optimizations: List[str] | None = None,
                  name: str = "2D_OPP_R"):
-        self._r = None
-        super().__init__(dataset, radius, rotation=True, optimizations=optimizations, name=name)
+        self._r: gp.Var | None = None  # rotation variable
+        super().__init__(dataset, radius, rotation=rotation, optimizations=optimizations, name=name)
 
     def _handle_data_and_rotation(self, dataset: NPA):
-        if not self.rotation:
-            raise AttributeError("Cannot instantiate Opp_rot without rotation, use Opp instead")
+        # if not self.rotation:
+        #     raise AttributeError("Cannot instantiate Opp_rot without rotation, use Opp instead")
+
         return dataset
 
     def _add_variables(self):
         """Adding the necessary variables to the model"""
+        if not self.rotation:
+            return Opp._add_variables(self)
+
         x, y, delta = super()._add_variables()
         r = self._model.addVars(self._N, vtype=GRB.BINARY, name="r")
         return x, y, delta, r
@@ -33,9 +38,13 @@ class Opp_rot(Opp):
     def _add_xy_boundaries_constr(self, x, y):
         """
         Add the boundaries constraints that the x and y coordinates of the items.
-        These are euqivalent to the one in the non-rotated case, but have some modifications.
+        These are equivalent to the one in the non-rotated case, but have some modifications.
         These constraints correspond to the constraints (16) and (16) in the paper.
         """
+        if not self.rotation:
+            Opp._add_xy_boundaries_constr(self, x, y)
+            return
+
         r = self._r
         l, h = self._l, self._h
         x_uppers = [(1 - r[i]) * (2 * self.R - l[i]) + r[i] * (2 * self.R - h[i]) for i
@@ -59,6 +68,10 @@ class Opp_rot(Opp):
         Add the no overlap constraints to the model.
         Correspond to the constraints (12), (13), (14) and (15) in the paper.
         """
+        if not self.rotation:
+            Opp._add_no_overlap_constr(self, x, y, delta)
+            return
+
         r = self._r
         l = self._l
         h = self._h
@@ -83,6 +96,9 @@ class Opp_rot(Opp):
 
     def _add_constr(self, variables):
         """Adding the necessary constraints to the model"""
+        if not self.rotation:
+            Opp._add_constr(self, variables)
+            return
         x, y, delta, r = variables
         self._add_xy_boundaries_constr(x, y)
         self._add_no_overlap_constr(x, y, delta)
@@ -95,27 +111,30 @@ class Opp_rot(Opp):
         - add constraints
         - add objective function
         """
+        if not self.rotation:
+            Opp.build_model(self)
+            return
         self._model = gp.Model(self._name)
         variables = self._add_variables()
         self._x, self._y, self._delta, self._r = variables
         self._add_constr(variables)
-
         self._model.setObjective(sum(1 for _ in self._items), GRB.MAXIMIZE)
 
     def print_solution(self):
         """Print the solution of the model"""
         super().print_solution()
-        for i in self._items:
-            print(f"Rotation: {self._r[i].x}")
+        if self.rotation:
+            for i in self._items:
+                print(f"Rotation: {self._r[i].x}")
 
 
 if __name__ == "__main__":
     import numpy as np
 
     R = 1.5
-    data = np.array([(1, 2) for _ in range(4)])
+    data = np.array([(1, 2) for _ in range(3)])
     # 1. Create a new instance of the class
-    opp_rot = Opp_rot(dataset=data, radius=R)
+    opp_rot = Opp_rot(dataset=data, radius=R, rotation=False)
 
     # 2. Call the method
     opp_rot.optimize()
