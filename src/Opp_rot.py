@@ -21,9 +21,6 @@ class Opp_rot(Opp):
         super().__init__(dataset, radius, rotation=rotation, optimizations=optimizations, name=name)
 
     def _handle_data_and_rotation(self, dataset: NPA):
-        # if not self.rotation:
-        #     raise AttributeError("Cannot instantiate Opp_rot without rotation, use Opp instead")
-
         return dataset
 
     def _add_variables(self):
@@ -32,8 +29,8 @@ class Opp_rot(Opp):
             return Opp._add_variables(self)
 
         x, y, delta = super()._add_variables()
-        r = self._model.addVars(self._N, vtype=GRB.BINARY, name="r")
-        return x, y, delta, r
+        self._r = self._model.addVars(self._N, vtype=GRB.BINARY, name="r")
+        return x, y, delta
 
     def _add_xy_boundaries_constr(self, x, y):
         """
@@ -99,7 +96,7 @@ class Opp_rot(Opp):
         if not self.rotation:
             Opp._add_constr(self, variables)
             return
-        x, y, delta, r = variables
+        x, y, delta = variables
         self._add_xy_boundaries_constr(x, y)
         self._add_no_overlap_constr(x, y, delta)
         self._add_delta_constr(delta)
@@ -116,7 +113,7 @@ class Opp_rot(Opp):
             return
         self._model = gp.Model(self._name)
         variables = self._add_variables()
-        self._x, self._y, self._delta, self._r = variables
+        self._x, self._y, self._delta = variables
         self._add_constr(variables)
         self._model.setObjective(sum(1 for _ in self._items), GRB.MAXIMIZE)
 
@@ -132,11 +129,18 @@ if __name__ == "__main__":
     import numpy as np
 
     R = 1.5
-    data = np.array([(1, 2) for _ in range(3)])
-    # 1. Create a new instance of the class
-    opp_rot = Opp_rot(dataset=data, radius=R, rotation=False)
-
-    # 2. Call the method
+    data = np.array([(1, 2) for _ in range(4)])
+    # FEASIBLE
+    opp_rot = Opp_rot(dataset=data[:3], radius=R, rotation=False)
     opp_rot.optimize()
+    opp_rot.print_solution()
 
+    # INFEASIBLE
+    opp_rot = Opp_rot(dataset=data, radius=R, rotation=False)
+    opp_rot.optimize()
+    opp_rot.print_solution()
+
+    # Rotation makes FEASIBLE
+    opp_rot = Opp_rot(dataset=data, radius=R, rotation=True)
+    opp_rot.optimize()
     opp_rot.print_solution()
