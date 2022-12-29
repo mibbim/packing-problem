@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 import gurobipy as gp
 
 from src.Opp import Opp, NPA
+from src.Opp_rot import Opp_rot
 from src.Solution import add_solution_rectangles, Solution
 
 DecisionVariable = tupledict
@@ -29,7 +30,7 @@ def powerset(iterable, r):
     return list(chain.from_iterable(map(list, combinations(xs, n)) for n in range(r + 1)))
 
 
-class Rpp(Opp):
+class Rpp(Opp_rot):
     def __init__(self,
                  dataset: NPA,
                  values: Literal["count", "volume"],
@@ -40,11 +41,12 @@ class Rpp(Opp):
                  rotatate_with_duplicates: bool = False,  # TODO: implement
                  ):
         self.rotation = rotation
+        self._duplicate = rotatate_with_duplicates
         # handle_data_and_rotation is called two times but brings no bug.
         # With a better design it will be called only once.
-        self.data = self._handle_data_and_rotation(dataset)  # TODO: adapt to Opp_rot
+        self.data = self._handle_data_and_rotation(dataset)
         if values == "count":
-            self._v = np.ones(self.data.shape[0])  # [1 for _ in self.data]
+            self._v = np.ones(self.data.shape[0])
         elif values == "volume":
             self._v = np.prod(self.data, axis=1)
         else:
@@ -52,7 +54,11 @@ class Rpp(Opp):
 
         self._a = self._z = self._x = self._y = self._delta = None
 
-        super().__init__(dataset=dataset,      # TODO: adapt to Opp_rot
+        # opp_rotation = self.rotation
+        if self.rotation and self._duplicate:
+            self.rotation = False
+
+        super().__init__(dataset=self.data,  # TODO: adapt to Opp_rot
                          radius=radius,
                          rotation=self.rotation,
                          optimizations=optimizations,
@@ -78,6 +84,12 @@ class Rpp(Opp):
     @property
     def _accepted_values(self):
         return self.values[self.accepted]
+
+    def _handle_data_and_rotation(self, dataset: NPA):
+        """Return the data in the right format and handle the rotation."""
+        if self.rotation and self._duplicate:
+            return np.vstack((dataset, dataset[:, ::-1]))
+        return dataset
 
     def build_model(self):
         self._model = gp.Model(self._name)
@@ -116,7 +128,7 @@ class Rpp(Opp):
             self._add_area_constraint(a)
         if "feasible_subsets" in self.optimizations:
             self._add_feasible_subsets(a)
-        if self.rotation:
+        if self.rotation and self._duplicate:
             self._add_rotation_constr(a)
 
     def _add_z_definitions_constr(self, a, z):
@@ -198,16 +210,21 @@ class Rpp(Opp):
 
 if __name__ == "__main__":
     R = 1.5
-    # data = [(1, 2), (3, 1), (3, 1), (2, 1)]
     data = np.array([(1, 2) for _ in range(4)])
 
     opts = []
+    rot = Rpp(dataset=data, values="volume", radius=R, rotation=True)
+    rot.optimize()
+    rot.display(title="Rotation")
+    rot.print_solution()
+    exit()
 
     rpp = Rpp(data, values="volume", radius=R, optimizations=opts, rotation=False)
     rpp.optimize()
-    rpp.display()
+    rpp.display(title="No rotation")
 
-    rot = Rpp(dataset=data, values="volume", radius=R, rotation=True)
-    rot.optimize()
-    rot.display()
+    rot_dup = Rpp(dataset=data, values="volume", radius=R, rotation=True,
+                  rotatate_with_duplicates=True)
+    rot_dup.optimize()
+    rot_dup.display(title="Rotation with duplicates")
     print()
