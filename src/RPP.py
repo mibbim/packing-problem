@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 
 import gurobipy as gp
 
-from src.Opp import Opp
+from src.Opp import Opp, NPA
 from src.Solution import add_solution_rectangles, Solution
 
 DecisionVariable = tupledict
@@ -31,16 +31,18 @@ def powerset(iterable, r):
 
 class Rpp(Opp):
     def __init__(self,
-                 dataset: np.ndarray,
+                 dataset: NPA,
                  values: Literal["count", "volume"],
                  radius: float,
                  rotation: bool = False,
                  optimizations: List | None = None,
-                 name: str = "2D_Rpp"):
+                 name: str = "2D_Rpp",
+                 rotatate_with_duplicates: bool = False,  # TODO: implement
+                 ):
         self.rotation = rotation
         # handle_data_and_rotation is called two times but brings no bug.
         # With a better design it will be called only once.
-        self.data = self._handle_data_and_rotation(dataset)
+        self.data = self._handle_data_and_rotation(dataset)  # TODO: adapt to Opp_rot
         if values == "count":
             self._v = np.ones(self.data.shape[0])  # [1 for _ in self.data]
         elif values == "volume":
@@ -50,7 +52,7 @@ class Rpp(Opp):
 
         self._a = self._z = self._x = self._y = self._delta = None
 
-        super().__init__(dataset=dataset,
+        super().__init__(dataset=dataset,      # TODO: adapt to Opp_rot
                          radius=radius,
                          rotation=self.rotation,
                          optimizations=optimizations,
