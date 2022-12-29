@@ -43,10 +43,13 @@ class Cpp(Rpp):
                  radius: float,
                  rotation: bool = False,
                  optimizations: List | None = None,
-                 name: str = "2D_Cpp"):
+                 name: str = "2D_Cpp",
+                 rotate_with_duplicates: bool = True,
+                 ):
 
         feasible_data = self._get_feasible_items(radius, dataset)
-        super().__init__(feasible_data, values, radius, rotation, optimizations, name)
+        super().__init__(feasible_data, values, radius, rotation, optimizations, name,
+                         rotate_with_duplicates=rotate_with_duplicates)
         self._values = values
         self.ccc = None
         self._prev_as = np.empty((0, 2))
@@ -300,7 +303,7 @@ if __name__ == "__main__":
     from datetime import datetime
 
     N = 10  # 20
-    rho = 0.8
+    rho = 0.4
 
     rng = np.random.default_rng(42)
     data = 4 * rng.random((N, 2)) + 1
@@ -327,7 +330,8 @@ if __name__ == "__main__":
         # "symmetric_tangent",
     ]
     print(f"Using optimizations {opts}, {N=}, {circle_area=}, {R=}")
-    cpp = Cpp(dataset=data, values="volume", radius=R, optimizations=opts, rotation=True)
+    cpp = Cpp(dataset=data, values="volume", radius=R, optimizations=opts,
+              rotation=True, )
     cpp.optimize(10, 1, time_limit=60 * 60)
     stop = datetime.now()
     print([(t, s.obj) for (t, s) in cpp.history])

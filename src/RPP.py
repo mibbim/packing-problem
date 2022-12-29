@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 
 import gurobipy as gp
 
-from src.Opp import Opp, NPA
+from src.Opp import NPA
 from src.Opp_rot import Opp_rot
 from src.Solution import add_solution_rectangles, Solution
 
@@ -38,9 +38,11 @@ class Rpp(Opp_rot):
                  rotation: bool = False,
                  optimizations: List | None = None,
                  name: str = "2D_Rpp",
-                 rotate_with_duplicates: bool = False, 
+                 rotate_with_duplicates: bool = False,
                  ):
         self.rotation = rotation
+        if rotate_with_duplicates and not self.rotation:
+            raise ValueError("Cannot rotate with duplicates if rotations are not allowed.")
         self._duplicate = rotate_with_duplicates
         # handle_data_and_rotation is called two times but brings no bug.
         # With a better design it will be called only once.
@@ -65,8 +67,19 @@ class Rpp(Opp_rot):
                          name=name)
 
     @property
+    def gurobi_solution(self) -> Solution:
+        """
+        Return the solution of the model obtained by the guroby solver.
+        If Cpp it may contain Infeasible Items (i.e. items that are placed outside the box).
+
+        """
+        assert self.is_solved
+        return Solution(self.accepted_pos, self.accepted_dims,
+                        self._accepted_values, self._accepted_rotations)
+
+    @property
     def solution(self):
-        if self.rotation and self._duplicate:
+        if self._r is not None:
             return Solution(
                 self.accepted_pos,
                 self.accepted_dims,

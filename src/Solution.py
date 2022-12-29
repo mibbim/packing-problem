@@ -12,6 +12,7 @@ class Solution:
         self._positions = positions
         self._dims = dimensions
         self._values = values
+        self._rotated = rotated
         if rotated is None:
             self._rotated = np.zeros((positions.shape[0],), dtype=bool)
 
