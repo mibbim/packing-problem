@@ -21,18 +21,14 @@ This module contains the implementation of the OPP algorithm.
 For reference, see the paper:
     https://www.sciencedirect.com/science/article/pii/S037722172200128X?via%3Dihub
 
-Refactoring notes:
-    - Maybe a Class Problem should be implemented, 
-        that contains the problem data (l, h, R...)
-    - Maybe a Class Circle should be implemented, that implements geometrical 
-        properties. Computing Areas, sagittas, etc. should be their responsability.
-    - Maybe reduce the number of properties in the classes OPP.
-    - Refactor so that add_variables returns a dictionary of variables instead of a tuple.
-    - Refactor entangling Opp and Opp_rot with composition instead of inheritance.
 """
 
 
 class Opp:
+    """
+    Solves the problem of packing a set of rectangles into a squared Area of side 2R.
+    """
+
     def __init__(self,
                  dataset: NPA,
                  radius,
@@ -254,15 +250,6 @@ class Opp:
         s_l = self.R - np.sqrt(self.R * self.R - self._l * self._l * 0.25)
         s_h = self.R - np.sqrt(self.R * self.R - self._h * self._h * 0.25)
         return s_l, s_h
-
-    # def _handle_data_and_rotation(self, dataset: NPA):
-    #     """Return the data in the right format and handle the rotation."""
-    #     # if self.rotation:
-    #     #     if type(self) is Opp:
-    #     #         raise AttributeError(
-    #     #             "Cannot instantiate Opp_rot without rotation, use Opp_rot instead")
-    #     #     return np.vstack((dataset, dataset[:, ::-1]))
-    #     return dataset
 
     def print_solution(self):
         """Print the solution."""

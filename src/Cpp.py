@@ -37,6 +37,8 @@ def draw_cuts(ax: plt.Axes, R: float, intersection_points: np.ndarray) -> None:
 
 
 class Cpp(Rpp):
+    """Implementation of Circular Packing Problem."""
+
     def __init__(self,
                  dataset: List[Tuple],
                  values: Literal["count", "volume"],
@@ -44,7 +46,7 @@ class Cpp(Rpp):
                  rotation: bool = False,
                  optimizations: List | None = None,
                  name: str = "2D_Cpp",
-                 rotate_with_duplicates: bool = True,
+                 rotate_with_duplicates: bool = False,
                  ):
 
         feasible_data = self._get_feasible_items(radius, dataset)
@@ -83,9 +85,9 @@ class Cpp(Rpp):
         return M
 
     @staticmethod
-    def _get_feasible_items(r, dataset):
+    def _get_feasible_items(radius, dataset):
         """Needs R"""
-        return dataset[np.linalg.norm(dataset, axis=1) <= 2 * r]
+        return dataset[np.linalg.norm(dataset, axis=1) <= 2 * radius]
 
     def _add_constr(self, variables):
         a, z, x, y, delta = variables
@@ -199,6 +201,7 @@ class Cpp(Rpp):
         self._best_sol.update(feasible_solution)
 
     def _timed_optimize(self) -> float:
+        """Wraps the core optimization method to add a timer"""
         start = time()
         super().optimize()
         return time() - start
@@ -306,7 +309,7 @@ if __name__ == "__main__":
     from datetime import datetime
 
     N = 10  # 20
-    rho = 0.4
+    rho = 0.8
 
     rng = np.random.default_rng(42)
     data = 4 * rng.random((N, 2)) + 1
@@ -317,18 +320,24 @@ if __name__ == "__main__":
     start = datetime.now()
     print(start)
     opts = [
+        # Core optimizations
         "big_M",  #
+
+        # Valid Inequalities
         "sagitta",  # VI1
         "area",  # VI2
         "feasible_subsets",  # VI3
         "infeasible_pairs",  # VI4
         "symmetry",  # VI5
+
+        # Cutting plane method optimizations
         "all_tangent",
         "objective_bound",
         "cutoff",
         "initial_objective_bound",
         "initial_cutoff"
 
+        # Not implemented
         # "initial_tangent"
         # "symmetric_tangent",
     ]

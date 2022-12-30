@@ -23,14 +23,12 @@ class Opp_rot(Opp):
         super().__init__(dataset, radius, rotation=rotation, optimizations=optimizations, name=name)
 
     @property
-    def rotations(self):
+    def rotations(self) -> NPA:
+        """Boolean variables that indicate whether an item is rotated or not in the solution"""
         if self._r is None:
             return np.zeros(self.pos.shape[0], dtype=bool)
         if self.is_solved:
             return np.array([r.x for r in self._r.values()], dtype=bool)
-
-    # def _handle_data_and_rotation(self, dataset: NPA):
-    #     return dataset
 
     def _add_variables(self):
         """Adding the necessary variables to the model"""
