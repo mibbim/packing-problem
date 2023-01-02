@@ -128,6 +128,9 @@ class Cpp(Rpp):
             for i, add_cut_method in enumerate(add_cuts_methods):
                 add_cut_method(m[ccc.s[i]], ccc.accepted_dims[ccc.s[i]],
                                a[ccc.s[i]], self.pos[accepted][ccc.s[i]])
+                if not self._duplicate:
+                    add_cut_method(m[ccc.s[i]], ccc.accepted_dims[ccc.s[i]][:, ::-1],
+                                   a[ccc.s[i]], self.pos[accepted][ccc.s[i]])
             cuts_added = ccc.s.sum()
         print(f"Adding {cuts_added} cuts")
         return a[ccc.s.sum(axis=0).astype(bool)]
@@ -309,7 +312,7 @@ if __name__ == "__main__":
     from datetime import datetime
 
     N = 10  # 20
-    rho = 0.8
+    rho = 0.4
 
     rng = np.random.default_rng(42)
     data = 4 * rng.random((N, 2)) + 1
