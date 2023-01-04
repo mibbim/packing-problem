@@ -115,25 +115,25 @@ class Cpp(Rpp):
                             self._add_cuts_s2,
                             self._add_cuts_s3,
                             self._add_cuts_s4]
-        cuts_added = 0
+
         if "all_tangent" in self.optimizations or "symmetric_tangent" in self.optimizations:
             for i, add_cut_method in enumerate(add_cuts_methods):
                 add_cut_method(m[ccc.s[i]], self.dims,
                                a[ccc.s[i]], self.pos)
-                cuts_added = ccc.s.sum() * self.dims.shape[0]
-                if self.rotation:  # and not self._duplicate: it is equivalent
-                    add_cut_method(m[ccc.s[i]], self.dims[:, ::-1],
-                                   a[ccc.s[i]], self.pos)
-                    cuts_added += ccc.s.sum() * self.dims.shape[0]
+            cuts_added = ccc.s.sum() * self.dims.shape[0]
+            # if self.rotation:  # and not self._duplicate: it is equivalent
+            # add_cut_method(m[ccc.s[i]], self.dims[:, ::-1],
+            #                a[ccc.s[i]], self.pos)
+            # cuts_added += ccc.s.sum() * self.dims.shape[0]
         else:
             for i, add_cut_method in enumerate(add_cuts_methods):
                 add_cut_method(m[ccc.s[i]], ccc.accepted_dims[ccc.s[i]],
                                a[ccc.s[i]], self.pos[accepted][ccc.s[i]])
-                cuts_added = ccc.s.sum()
-                if self.rotation:  # and not self._duplicate: its equivalent
-                    add_cut_method(m[ccc.s[i]], ccc.accepted_dims[ccc.s[i]][:, ::-1],
-                                   a[ccc.s[i]], self.pos[accepted][ccc.s[i]])
-                    cuts_added += ccc.s.sum()
+            cuts_added = ccc.s.sum()
+            # if self.rotation:  # and not self._duplicate: its equivalent
+            #     add_cut_method(m[ccc.s[i]], ccc.accepted_dims[ccc.s[i]][:, ::-1],
+            #                    a[ccc.s[i]], self.pos[accepted][ccc.s[i]])
+            #     cuts_added += ccc.s.sum()
         print(f"Adding {cuts_added} cuts")
         return a[ccc.s.sum(axis=0).astype(bool)]
 
