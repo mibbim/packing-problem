@@ -12,7 +12,7 @@ class Cpp_rot(Cpp):
         s_l, s_h = self._compute_sagittas()
         min_s = np.minimum(s_l, s_h)
         s_min_sum = np.add.outer(min_s, min_s)
-        M -= s_min_sum
+        M[:] -= np.expand_dims(s_min_sum, axis=-1)
         return M
 
     def _add_xy_sagitta_boundaries(self, x, y):
