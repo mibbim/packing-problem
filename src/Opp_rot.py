@@ -29,7 +29,7 @@ class Opp_rot(Opp):
             return np.zeros(self.pos.shape[0], dtype=bool)
         if self.is_solved:
             return np.array([r.x for r in self._r.values()], dtype=bool)
-        self._r.values()
+        return self._r.values()
 
     def _add_variables(self):
         """Adding the necessary variables to the model"""

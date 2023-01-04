@@ -141,7 +141,7 @@ class Cpp(Rpp):
         return a[ccc.s.sum(axis=0).astype(bool)]
 
     def _add_cuts_s1(self, m, dims, a, pos):
-        self._model.addConstrs(
+        self._constr["s1"] = self._model.addConstrs(
             (yi + hi <= ya + ma * (xi + li - xa) + cut_tol
              for (xi, yi), (li, hi) in zip(pos, dims)
              for ((xa, ya), ma) in zip(a, m)),
@@ -149,7 +149,7 @@ class Cpp(Rpp):
         )
 
     def _add_cuts_s2(self, m, dims, a, pos):
-        self._model.addConstrs(
+        self._constr["s2"] = self._model.addConstrs(
             (yi + hi <= ya + ma * (xi - xa) + cut_tol
              for (xi, yi), (li, hi) in zip(pos, dims)
              for ((xa, ya), ma) in zip(a, m)),
@@ -157,7 +157,7 @@ class Cpp(Rpp):
         )
 
     def _add_cuts_s3(self, m, dims, a, pos):
-        self._model.addConstrs(
+        self._constr["s3"] = self._model.addConstrs(
             (yi >= ya + ma * (xi - xa) - cut_tol
              for (xi, yi) in pos
              for ((xa, ya), ma) in zip(a, m)),
@@ -165,7 +165,7 @@ class Cpp(Rpp):
         )
 
     def _add_cuts_s4(self, m, dims, a, pos):
-        self._model.addConstrs(
+        self._constr["s4"] = self._model.addConstrs(
             (yi >= ya + ma * (xi + li - xa) - cut_tol
              for (xi, yi), (li, hi) in zip(pos, dims)
              for ((xa, ya), ma) in zip(a, m)),
@@ -354,7 +354,7 @@ if __name__ == "__main__":
               rotation=False,
               rotate_with_duplicates=False
               )
-    cpp.optimize(100, 2, time_limit=60 * 60)
+    cpp.optimize(100, 1, time_limit=60 * 60)
     stop = datetime.now()
     print([(t, s.objective) for (t, s) in cpp.history])
     print(start, stop, stop - start)

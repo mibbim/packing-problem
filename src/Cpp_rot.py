@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.Cpp import Cpp, compute_tangent_angular_coefficient
+from src.Cpp import Cpp, cut_tol
 
 
 class Cpp_rot(Cpp):
@@ -51,36 +51,39 @@ class Cpp_rot(Cpp):
             name="infeasible_pairs"
         )
 
-    def add_tangent_plane_cuts(self):
-        if not self.rotation:  # and not self._duplicate: it is equivalent
-            return super().add_tangent_plane_cuts()
-        if self._duplicate:
-            return super().add_tangent_plane_cuts()
-        ccc = self.ccc
-        a = ccc.get_intersection_point()
-        m = compute_tangent_angular_coefficient(self.R, a)
-        accepted = self.accepted
-        self.reset()
-        add_cuts_methods = [self._add_cuts_s1,
-                            self._add_cuts_s2,
-                            self._add_cuts_s3,
-                            self._add_cuts_s4]
-        if "all_tangent" in self.optimizations or "symmetric_tangent" in self.optimizations:
-            for i, add_cut_method in enumerate(add_cuts_methods):
-                add_cut_method(m[ccc.s[i]], self.dims,
-                               a[ccc.s[i]], self.pos)
-                add_cut_method(m[ccc.s[i]], self.dims[:, ::-1],
-                               a[ccc.s[i]], self.pos)
-            cuts_added = ccc.s.sum() * self.dims.shape[0] * 2
-        else:
-            for i, add_cut_method in enumerate(add_cuts_methods):
-                add_cut_method(m[ccc.s[i]], ccc.accepted_dims[ccc.s[i]],
-                               a[ccc.s[i]], self.pos[accepted][ccc.s[i]])
-                add_cut_method(m[ccc.s[i]], ccc.accepted_dims[ccc.s[i]][:, ::-1],
-                               a[ccc.s[i]], self.pos[accepted][ccc.s[i]])
-            cuts_added = ccc.s.sum() * 2
-        print(f"Adding {cuts_added} cuts")
-        return a[ccc.s.sum(axis=0).astype(bool)]
+    def _add_cuts_s2(self, m, dims, a, pos):
+        if not self.rotation:
+            return super()._add_cuts_s2(m, dims, a, pos)
+        r = self._r
+        # hi = hi * (1 - ri) + li * ri
+        # li = li * (1 - ri) + hi * ri
+        self._constr["s2"] = self._model.addConstrs(
+            (yi + hi * (1 - ri) + li * ri <= ya + ma * (xi - xa) + cut_tol
+             for (xi, yi), (li, hi), ri in zip(pos, dims, r)
+             for ((xa, ya), ma) in zip(a, m)),
+            name="s2"
+        )
+
+    def _add_cuts_s3(self, m, dims, a, pos):
+        if not self.rotation:
+            return super()._add_cuts_s3(m, dims, a, pos)
+        self._constr["s3"] = self._model.addConstrs(
+            (yi >= ya + ma * (xi - xa) - cut_tol
+             for (xi, yi) in pos
+             for ((xa, ya), ma) in zip(a, m)),
+            name="s3"
+        )
+
+    def _add_cuts_s4(self, m, dims, a, pos):
+        if not self.rotation:
+            return super()._add_cuts_s4(m, dims, a, pos)
+        r = self._r
+        self._constr["s4"] = self._model.addConstrs(
+            (yi >= ya + ma * (xi + li * (1 - ri) + hi * ri - xa) - cut_tol
+             for (xi, yi), (li, hi), ri in zip(pos, dims, r)
+             for ((xa, ya), ma) in zip(a, m)),
+            name="s4"
+        )
 
 
 if __name__ == "__main__":
@@ -96,8 +99,8 @@ if __name__ == "__main__":
     opts = [
         # Core optimizations
         "big_M",  #
-
-        # Valid Inequalities
+        #
+        # # Valid Inequalities
         "sagitta",  # VI1
         "area",  # VI2
         "feasible_subsets",  # VI3
@@ -105,7 +108,7 @@ if __name__ == "__main__":
         "symmetry",  # VI5
 
         # Cutting plane method optimizations
-        "all_tangent",
+        # "all_tangent",
         "objective_bound",
         "cutoff",
         "initial_objective_bound",
@@ -120,23 +123,25 @@ if __name__ == "__main__":
                   rotate_with_duplicates=False)
 
     cpp.optimize()
-
+    print("rotation")
     data = 4 * rng.random((N, 2)) + 1
     packs_area = np.sum(data[:, 0] * data[:, 1])
     circle_area = rho * packs_area
     R = np.sqrt(circle_area / np.pi)
+    data = data[:5]
+    # print()
     cpp_rot = Cpp_rot(dataset=data, values="volume", radius=R, optimizations=opts,
                       rotation=True,
                       rotate_with_duplicates=False
                       )
-    cpp_rot.optimize()
-
+    cpp_rot.optimize(display_each=100)
+    print("rotation with duplicates")
     data = 4 * rng.random((N, 2)) + 1
     packs_area = np.sum(data[:, 0] * data[:, 1])
     circle_area = rho * packs_area
     R = np.sqrt(circle_area / np.pi)
-    cpp_dup = Cpp_rot(dataset=data, values="volume", radius=R, optimizations=opts,
+    cpp_dup = Cpp_rot(dataset=data, values="volume", radius=R, optimizations=opts + ["all_tangent"],
                       rotation=True,
                       rotate_with_duplicates=True
                       )
-    cpp_dup.optimize()
+    cpp_dup.optimize(display_each=100)
