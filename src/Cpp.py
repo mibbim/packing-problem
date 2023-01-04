@@ -9,7 +9,7 @@ from src.RPP import Rpp, create_new_sqauared_ax
 from src.Solution import BestSolution, Solution, add_solution_rectangles
 from src.circular_container_cuts import SolutionProcesser
 
-cut_tol = 1e-3
+cut_tol = 0
 
 
 def compute_tangent_angular_coefficient(R: float, intersection_points: np.ndarray) -> np.ndarray:
@@ -46,10 +46,13 @@ class Cpp(Rpp):
                  rotation: bool = False,
                  optimizations: List | None = None,
                  name: str = "2D_Cpp",
-                 rotate_with_duplicates: bool = False,
+                 rotate_with_duplicates: bool = True,
                  ):
-
+        if self.__class__ is Cpp:
+            if rotation and not rotate_with_duplicates:
+                raise ValueError("Rotation is implemented only with duplicates")
         feasible_data = self._get_feasible_items(radius, dataset)
+        self._duplicate = rotate_with_duplicates
         super().__init__(feasible_data, values, radius, rotation, optimizations, name,
                          rotate_with_duplicates=rotate_with_duplicates)
         self._values = values
@@ -87,7 +90,7 @@ class Cpp(Rpp):
     @staticmethod
     def _get_feasible_items(radius, dataset):
         """Needs R"""
-        return dataset[np.linalg.norm(dataset, axis=1) <= 2 * radius]
+        return dataset[np.linalg.norm(dataset, axis=1) <= 2 * radius - cut_tol]
 
     def _add_constr(self, variables):
         a, z, x, y, delta = variables
@@ -139,7 +142,7 @@ class Cpp(Rpp):
 
     def _add_cuts_s1(self, m, dims, a, pos):
         self._model.addConstrs(
-            (yi + hi <= ya + ma * (xi + li - xa)
+            (yi + hi <= ya + ma * (xi + li - xa) + cut_tol
              for (xi, yi), (li, hi) in zip(pos, dims)
              for ((xa, ya), ma) in zip(a, m)),
             name="s1"
@@ -147,7 +150,7 @@ class Cpp(Rpp):
 
     def _add_cuts_s2(self, m, dims, a, pos):
         self._model.addConstrs(
-            (yi + hi <= ya + ma * (xi - xa)
+            (yi + hi <= ya + ma * (xi - xa) + cut_tol
              for (xi, yi), (li, hi) in zip(pos, dims)
              for ((xa, ya), ma) in zip(a, m)),
             name="s2"
@@ -155,7 +158,7 @@ class Cpp(Rpp):
 
     def _add_cuts_s3(self, m, dims, a, pos):
         self._model.addConstrs(
-            (yi >= ya + ma * (xi - xa)
+            (yi >= ya + ma * (xi - xa) - cut_tol
              for (xi, yi) in pos
              for ((xa, ya), ma) in zip(a, m)),
             name="s3"
@@ -163,7 +166,7 @@ class Cpp(Rpp):
 
     def _add_cuts_s4(self, m, dims, a, pos):
         self._model.addConstrs(
-            (yi >= ya + ma * (xi + li - xa)
+            (yi >= ya + ma * (xi + li - xa) - cut_tol
              for (xi, yi), (li, hi) in zip(pos, dims)
              for ((xa, ya), ma) in zip(a, m)),
             name="s4"
@@ -211,7 +214,7 @@ class Cpp(Rpp):
         super().optimize()
         return time() - start
 
-    def optimize(self, max_iteration: int = 10, display_each: int = 2, time_limit: int = np.inf,
+    def optimize(self, max_iteration: int = 100, display_each: int = 2, time_limit: int = np.inf,
                  plot: bool = True, show: bool = True):
         if "initial_objective_bound" in self.optimizations:
             self._model.Params.BestObjStop = self._get_initial_objective_bound()
@@ -277,12 +280,12 @@ class Cpp(Rpp):
         The reference equation are (27) and (28)
         """
         s_l, s_h = self._compute_sagittas()
-        self._constr["10"] = self._model.addConstrs(
+        self._constr["27"] = self._model.addConstrs(
             (x[i] == [s_h[i], 2 * self.R - self._l[i] - s_h[i]] for i in self._items),
-            name="10")
-        self._constr["11"] = self._model.addConstrs(
+            name="27")
+        self._constr["28"] = self._model.addConstrs(
             (y[i] == [s_l[i], 2 * self.R - self._h[i] - s_l[i]] for i in self._items),
-            name="11")
+            name="28")
 
     def _add_infeasible_pairs_opt(self, a):
         if "big_M" in self.optimizations:
@@ -348,7 +351,7 @@ if __name__ == "__main__":
     ]
     print(f"Using optimizations {opts}, {N=}, {circle_area=}, {R=}")
     cpp = Cpp(dataset=data, values="volume", radius=R, optimizations=opts,
-              rotation=True,
+              rotation=False,
               rotate_with_duplicates=False
               )
     cpp.optimize(100, 2, time_limit=60 * 60)
@@ -362,6 +365,6 @@ if __name__ == "__main__":
     R = np.sqrt(circle_area / np.pi)
     cpp = Cpp(dataset=data, values="volume", radius=R, optimizations=opts,
               rotation=True,
-              rotate_with_duplicates=True
+              rotate_with_duplicates=True,
               )
     cpp.optimize(100, 2, time_limit=60 * 60)

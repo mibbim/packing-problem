@@ -107,7 +107,7 @@ class Rpp(Opp_rot):
 
     @property
     def _accepted_rotations(self):
-        return self.rotations[self.accepted]
+        return self.rotation_vars[self.accepted]
 
     def _handle_data_duplication(self, dataset: NPA):
         """Return the data in the right format and handle the rotation."""
