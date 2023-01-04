@@ -224,6 +224,7 @@ class Rpp(Opp_rot):
             )
 
     def _add_rotation_constr(self, a):
+        """ Add constraints to forbid accepting a box and its rotated version."""
         self._constr["rotation"] = self._model.addConstrs(
             a[i] + a[i + self._N // 2] <= 1 for i in range(self._N // 2)
         )
